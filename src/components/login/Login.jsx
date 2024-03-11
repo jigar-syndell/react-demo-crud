@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
-import "./login.css"; // Assuming you still need this htmlFor global styles
 import Container from "@mui/material/Container";
-import "./login.css"; // Import the new CSS file
 import Copyright from "../footer/Copyright";
 import CustomCheckbox from "../../utils/checkBox";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import Box from "@mui/material/Box";
-import axios from 'axios';
 
 function Login({ isPasswordResetPage }) {
   const url = import.meta.env.VITE_BACKEND_APP_URI
