@@ -9,6 +9,9 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { IconButton, InputAdornment } from '@mui/material';
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import {
   Box,
@@ -36,7 +39,7 @@ const generateMockData = () => {
       group: `Group ${(i % 5) + 1}`,
       UoM: i % 2 === 0 ? "pcs" : "kg",
       MRP: Math.floor(Math.random() * 500) + 50,
-      inActive: i % 3 === 0 ? true : false,
+      inActive: i % 3 === 0 ? "True" : "False",
       createdBy: `User ${(i % 3) + 1}`,
       createdOn: "2022-01-01", // Assuming all items are created on the same date
     });
@@ -380,24 +383,22 @@ const Items = () => {
                             row[column]
                           )}
                           {column === "Edit" && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => handleEdit(row.Id)}
-                              sx={{ ml: 1 }}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          {column === "Delete" && (
-                            <Button
-                              variant="outlined"
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(row.Id)}
+                                  sx={{ ml: 1 }}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              )}
+                         {column === "Delete" && (
+                            <IconButton
                               size="small"
                               onClick={() => handleDelete(row.Id)}
                               sx={{ ml: 1 }}
                             >
-                              Delete
-                            </Button>
+                              <DeleteIcon />
+                            </IconButton>
                           )}
                         </TableCell>
                       ))}

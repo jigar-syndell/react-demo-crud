@@ -10,6 +10,9 @@ import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { IconButton, InputAdornment } from '@mui/material';
 import {
   Box,
   Typography,
@@ -22,8 +25,6 @@ import {
   FormControlLabel,
   TextField,
 } from "@mui/material";
-import SouthIcon from "@mui/icons-material/South";
-import NorthIcon from "@mui/icons-material/North";
 const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "ItemsMaster" });
 
 const generateMockData = () => {
@@ -36,7 +37,7 @@ const generateMockData = () => {
       group: `Group ${(i % 5) + 1}`,
       UoM: i % 2 === 0 ? "pcs" : "kg",
       MRP: Math.floor(Math.random() * 500) + 50,
-      inActive: i % 3 === 0 ? true : false,
+      inActive: i % 3 === 0 ? "True" : "False",
       createdBy: `User ${(i % 3) + 1}`,
       createdOn: "2022-01-01", // Assuming all items are created on the same date
     });
@@ -45,9 +46,8 @@ const generateMockData = () => {
 };
 
 const mockData = generateMockData();
-
-function Picklisttype() {
-
+// function Dashboard() {
+function PicklistType() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState("");
@@ -366,43 +366,38 @@ function Picklisttype() {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
                       <TableRow key={row.Id}>
-                        {visibleColumnsArray.map((column) => (
-                          <TableCell
-                            key={column}
-                            sx={{ color: "#6c757d", fontSize: ".8rem" }}
-                          >
-                            {column === "Image" ? (
-                              <img
-                                src={row[column]}
-                                alt={row.Name}
-                                style={{ width: 50, height: 50 }}
-                              />
-                            ) : (
-                              row[column]
-                            )}
-                            {column === "Edit" && (
-                              <Button
-                                variant="outlined"
+                      {visibleColumnsArray.map((column) => (
+                        <TableCell key={column} sx={{ color: "#6c757d", fontSize: ".8rem" }}>
+                        {column === "Image" ? (
+                          <img
+                            src={row[column]}
+                            alt={row.Name}
+                            style={{ width: 50, height: 50 }}
+                          />
+                        ) : (
+                          <>{row[column]}</>
+                        )}
+                         {column === "Edit" && (
+                              <IconButton
                                 size="small"
                                 onClick={() => handleEdit(row.Id)}
                                 sx={{ ml: 1 }}
                               >
-                                Edit
-                              </Button>
+                                <EditIcon />
+                              </IconButton>
                             )}
-                            {column === "Delete" && (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => handleDelete(row.Id)}
-                                sx={{ ml: 1 }}
-                              >
-                                Delete
-                              </Button>
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+                        {column === "Delete" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDelete(row.Id)}
+                                  sx={{ ml: 1 }}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              )}
+                      </TableCell>                        
+                      ))}
+                    </TableRow>
                     ))
                 )}
               </TableBody>
@@ -430,4 +425,4 @@ function Picklisttype() {
     );
 }
 
-export default Picklisttype
+export default PicklistType

@@ -15,6 +15,7 @@ function Login({ isPasswordResetPage }) {
     password: "",
     remeberme: false,
   };
+  console.log(isPasswordResetPage)
   const [isLoginPage, setisLoginPage] = useState(isPasswordResetPage != true);
   const [loginCred, setLoginCred] = useState(loginInitialData);
   const [showPassword, setShowPassword] = useState(false);
@@ -211,7 +212,7 @@ function Login({ isPasswordResetPage }) {
                     <span className="ml-2 text-metal">Remember me</span>
                   </div>
                   <button
-                    class="bg-purple text-white font-bold py-2 px-4 rounded-sm w-full hover:bg-dark-purple "
+                    className="bg-purple text-white font-bold py-2 px-4 rounded-sm w-full hover:bg-dark-purple "
                     type="submit"
                   >
                     Log in
@@ -241,7 +242,7 @@ function Login({ isPasswordResetPage }) {
                     )}
                   </div>
                   <button
-                    class="bg-purple text-white font-bold py-2 px-4 rounded-sm w-full hover:bg-dark-purple "
+                    className="bg-purple text-white font-bold py-2 px-4 rounded-sm w-full hover:bg-dark-purple "
                     type="submit"
                   >
                     Reset Password

@@ -10,6 +10,9 @@ import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { IconButton, InputAdornment } from '@mui/material';
 import {
   Box,
   Typography,
@@ -21,160 +24,265 @@ import {
   Menu,
   FormControlLabel,
   TextField,
+  Autocomplete,
+  Stack,
+  InputLabel,
 } from "@mui/material";
-import SouthIcon from "@mui/icons-material/South";
-import NorthIcon from "@mui/icons-material/North";
-const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "ItemsMaster" });
+const csvConfig = mkConfig({
+  useKeysAsHeaders: true,
+  filename: "ItemsGroupMaster",
+});
 
 const generateMockData = () => {
   const mockData = [];
   for (let i = 1; i <= 100; i++) {
     mockData.push({
       Id: i,
-      Name: `Item ${i}`,
-      Image: `https://picsum.photos/seed/picsum/200/300`,
-      group: `Group ${(i % 5) + 1}`,
-      UoM: i % 2 === 0 ? "pcs" : "kg",
-      MRP: Math.floor(Math.random() * 500) + 50,
-      inActive: i % 3 === 0 ? true : false,
-      createdBy: `User ${(i % 3) + 1}`,
-      createdOn: "2022-01-01", // Assuming all items are created on the same date
+      "Item Group Name": `Item Group ${i}`,
+      "Group Type": `Type ${i % 3}`,
+      "InActive?": i % 2 === 0 ? "Yes" : "No",
+      "Created By": `User ${(i % 3) + 1}`,
+      "Created On": "2022-01-01",
     });
   }
   return mockData;
 };
-
 const mockData = generateMockData();
 
-function ItemGroup() {
+const ItemGroup = () => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+  const [itemGroup, setItemGroup] = useState({ name: "", isactive: false });
+  const [itemGroupType, setItemGroupType] = useState(null);
+  const [error, setError] = useState({ name: "", type: "" });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState({
+    Id: true,
+    "Item Group Name": true,
+    "Group Type": true,
+    "InActive?": true,
+    "Created By": true,
+    "Created On": true,
+    Delete: true,
+    Edit: true,
+  });
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [visibleColumns, setVisibleColumns] = useState({
-      Id: true,
-      Name: true,
-      Image: true,
-      group: true,
-      UoM: true,
-      MRP: true,
-      inActive: true,
-      createdBy: true,
-      createdOn: true,
-      Delete: true,
-      Edit: true,
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleCopyVisibleData = () => {
+    const visibleData = mockData
+      .map((item) => {
+        return Object.keys(item)
+          .filter((key) => visibleColumns[key])
+          .map((key) => item[key])
+          .join(", ");
+      })
+      .join("\n");
+    navigator.clipboard.writeText(visibleData);
+  };
+
+  const handlePrint = () => {
+    // Logic to print table data
+    window.print();
+  };
+
+  const handleExportCSV = () => {
+    // Logic to export table data to CSV
+    const csv = generateCsv(csvConfig)(mockData);
+    download(csvConfig)(csv);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleDelete = (id) => {
+    console.log(id);
+  };
+  const handleEdit = (id) => {
+    console.log(id);
+  };
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+  
+
+  const handleToggleColumn = (column) => {
+    setVisibleColumns({
+      ...visibleColumns,
+      [column]: !visibleColumns[column],
     });
-    const navigate = useNavigate();
-  
-    const handleChangePage = (event, newPage) => {
-      setPage(newPage);
-    };
-  
-    const handleChangeRowsPerPage = (event) => {
-      setRowsPerPage(parseInt(event.target.value, 10));
-      setPage(0);
-    };
-  
-    const handleSearchChange = (event) => {
-      setSearchTerm(event.target.value);
-    };
-  
-    const handleDelete = (id) => {
-      console.log(id);
-    };
-    const handleEdit = (id) => {
-      console.log(id);
-    };
-  
-    const handleSort = (key) => {
-      let direction = "asc";
-      if (sortConfig.key === key && sortConfig.direction === "asc") {
-        direction = "desc";
-      }
-      setSortConfig({ key, direction });
-    };
-  
-    const handleToggleColumn = (column) => {
-      setVisibleColumns({
-        ...visibleColumns,
-        [column]: !visibleColumns[column],
-      });
-    };
-  
-    const handleMenuOpen = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-  
-    const handleMenuClose = () => {
-      setAnchorEl(null);
-    };
-  
-    const handleExportCSV = () => {
-      // Logic to export table data to CSV
-      const csv = generateCsv(csvConfig)(mockData);
-      download(csvConfig)(csv);
-    };
-  
-    const handlePrint = () => {
-      // Logic to print table data
-      window.print();
-    };
-  
-    const handleCopyVisibleData = () => {
-      const visibleData = mockData
-        .map((item) => {
-          return Object.keys(item)
-            .filter((key) => visibleColumns[key])
-            .map((key) => item[key])
-            .join(", ");
-        })
-        .join("\n");
-      navigator.clipboard.writeText(visibleData);
-    };
-  
-    const sortedData = mockData.sort((a, b) => {
-      if (sortConfig.direction === "asc") {
-        return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
-      } else {
-        return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
-      }
-    });
-  
-    const filteredData = sortedData.filter((item) => {
-      return Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  
-    const visibleColumnsArray = Object.keys(visibleColumns).filter(
-      (column) => visibleColumns[column]
+  };
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const sortedData = mockData.sort((a, b) => {
+    if(sortConfig.direction === ""){
+      return
+    }
+    if (sortConfig.direction === "asc") {
+      return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
+    } else {
+      return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
+    }
+  });
+
+  const filteredData = sortedData.filter((item) => {
+    return Object.values(item).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
     );
-  
-    return (
-      <Container className="bg-white p-6 mb-6 rounde">
-        <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2}>
-          <Button
-            variant="contained"
-            type="submit"
+  });
+
+  const visibleColumnsArray = Object.keys(visibleColumns).filter(
+    (column) => visibleColumns[column]
+  );
+  const itemGroupTypes = [
+    { label: "Type 1", value: "Type 1" },
+    { label: "Type 2", value: "Type 2" },
+    { label: "Type 3", value: "Type 3" },
+    { label: "Type 4", value: "Type 4" },
+    { label: "Type 5", value: "Type 5" },
+  ];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const removeError = () => {
+      setTimeout(() => {
+        setError({ name: "", type: "" });
+      }, 3000);
+    };
+    if (!itemGroup.name.trim()) {
+      setError((prevErrors) => ({
+        ...prevErrors,
+        name: "Please enter a name",
+      }));
+      removeError();
+      return;
+    }
+    console.log(itemGroupType);
+    if (itemGroupType == null) {
+      setError((prevErrors) => ({
+        ...prevErrors,
+        type: "Please select a type",
+      }));
+      removeError();
+      return;
+    }
+  };
+
+  return (
+    <Container>
+      <form onSubmit={handleSubmit}>
+        <Box
+          display="flex"
+          alignItems="center"
+          mb={2}
+          sx={{
+            padding: "24px",
+            backgroundColor: "#fff",
+            borderRadius: "0.25rem",
+          }}
+        >
+          <Box sx={{ width: "80%", display: "flex", flexDirection: "row" }}>
+            <TextField
+              label="Item Group Name"
+              variant="outlined"
+              fullWidth
+              value={itemGroup.name}
+              onChange={(e) => {
+                setItemGroup({ ...itemGroup, name: e.target.value });
+              }}
+              size="small"
+              error={!!error.name}
+              helperText={error.name}
+              sx={{ margin: "0 12px", color:"#6c757d" }}
+            />
+            <Autocomplete
+              options={itemGroupTypes}
+              getOptionLabel={(option) => option.label}
+              fullWidth
+              onChange={(event, value) => {
+                setError((prevErrors) => ({ ...prevErrors, name: "" }));
+                setItemGroupType(value);
+              }}
+              isOptionEqualToValue={(option, value) =>
+                option.value === value?.value
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Item Group Type"
+                  variant="outlined"
+                  size="small"
+                  error={!!error.type} 
+                  helperText={error.type} 
+                />
+              )}
+              size="small"
+              sx={{ margin: "0 12px" }}
+            />
+          </Box>
+          <Box
             sx={{
-              backgroundColor: "#5671f0",
-              borderColor: "#5671f0",
-              textTransform: "none",
-              boxShadow: "0 0 0 rgba(86,113,240,.5)",
-              "&:hover": {
-                backgroundColor: "#3353ed",
-                borderColor: "#274aec",
-              },
-            }}
-            onClick={() => {
-              navigate("/item/create");
+              width: "20%",
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "column",
             }}
           >
-            Add New
-          </Button>
+            <FormControlLabel
+              control={<Checkbox checked={!!itemGroup.isActive} />}
+              label="IsActive"
+              onChange={(e) =>
+                setItemGroup({ ...itemGroup, isactive: e.target.checked })
+              }
+              sx={{
+                fontSize: ".5rem",
+                margin: "0",
+              }}
+            />
+            <Button
+              variant="contained"
+              type="submit"
+              sx={{
+                width: "70%",
+                marginLeft: "auto", // Align the button to the right
+                backgroundColor: "#5671f0",
+                borderColor: "#5671f0",
+                textTransform: "none",
+                boxShadow: "0 0 0 rgba(86,113,240,.5)",
+                "&:hover": {
+                  backgroundColor: "#3353ed",
+                  borderColor: "#274aec",
+                },
+              }}
+            >
+              Save
+            </Button>
+          </Box>
         </Box>
+      </form>
+      <Box className="bg-white p-6 mb-6 rounded">
         <Box
           display="flex"
           justifyContent="space-between"
@@ -327,7 +435,10 @@ function ItemGroup() {
           />
         </Box>
         <Box>
-          <TableContainer component={Paper} sx={{ border: "1px solid #dee2e6" }}>
+          <TableContainer
+            component={Paper}
+            sx={{ border: "1px solid #dee2e6" }}
+          >
             <Table>
               <TableHead
                 sx={{ backgroundColor: "white", border: "1px solid #dee2e6" }}
@@ -371,35 +482,25 @@ function ItemGroup() {
                             key={column}
                             sx={{ color: "#6c757d", fontSize: ".8rem" }}
                           >
-                            {column === "Image" ? (
-                              <img
-                                src={row[column]}
-                                alt={row.Name}
-                                style={{ width: 50, height: 50 }}
-                              />
-                            ) : (
-                              row[column]
-                            )}
+                            {row[column]}
                             {column === "Edit" && (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => handleEdit(row.Id)}
-                                sx={{ ml: 1 }}
-                              >
-                                Edit
-                              </Button>
-                            )}
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(row.Id)}
+                                  sx={{ ml: 1 }}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              )}
                             {column === "Delete" && (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => handleDelete(row.Id)}
-                                sx={{ ml: 1 }}
-                              >
-                                Delete
-                              </Button>
-                            )}
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDelete(row.Id)}
+                                    sx={{ ml: 1 }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                )}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -408,7 +509,11 @@ function ItemGroup() {
               </TableBody>
             </Table>
           </TableContainer>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="body2" color="textSecondary">
               Showing {page * rowsPerPage + 1} to{" "}
               {Math.min((page + 1) * rowsPerPage, filteredData.length)} of{" "}
@@ -426,8 +531,9 @@ function ItemGroup() {
             />
           </Box>
         </Box>
-      </Container>
-    );
-}
+      </Box>
+    </Container>
+  );
+};
 
-export default ItemGroup
+export default ItemGroup;

@@ -8,13 +8,9 @@ import routes from '../../routes';
 function AppSidebar() {
   const location = useLocation();
   const currentRoute = routes.find(route => route.path === location.pathname);
-  console.log(currentRoute)
-  console.log("-")
     const [selected, setSelected] = useState(currentRoute.name);
     const navigateTo = useNavigate();
     const { collapsed } = useSelector((state) => state.sidebar)
-
-    console.log(selected)
 
     const handleNavigation = (path) => {
         navigateTo(path);
@@ -26,13 +22,13 @@ function AppSidebar() {
       return (
         <MenuItem
           active={selected === title}
-          className={`!text-sm hover:bg-dark-purple` }
+          className={`!text-sm hover:bg-dark-purple h-10` }
           onClick={() => {
             setSelected(title);
             handleNavigation(to);
           }}
         >
-          <Typography  className={`!text-sm `}>{title}</Typography>
+          <Typography  className={`!text-sm`}>{title}</Typography>
         </MenuItem>
       );
     };
@@ -40,7 +36,7 @@ function AppSidebar() {
     return (
         <div className="mainContainer w-max bg-[#f5f7fb] min-h-screen">
         <div style={{ display: 'flex', height: '100%', minHeight: '400px', background:'#f5f7fb', marginLeft:'30px', paddingTop:'30px' }}>
-            <Sidebar collapsed={collapsed} width={"240px"} style={{ minHeight:'50vh', maxHeight:'98%'}} backgroundColor="#fff" className="transition-all duration-100 ease-out shadow-md rounded-md">
+            <Sidebar collapsed={collapsed} width={"240px"} style={{ minHeight:'50vh', maxHeight:'98%'}} backgroundColor="#fff" className="transition-all duration-100 ease-out shadow-md rounded-md p-2 bg-white">
             <Menu  
                  menuItemStyles={{
                   button: ({ level, active, disabled }) => {
@@ -49,6 +45,7 @@ function AppSidebar() {
                         '&:hover': {
                           backgroundColor: '#fff',
                         },
+                        height:'40px' 
                       };
                   },
                 }}

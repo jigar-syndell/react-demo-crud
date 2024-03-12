@@ -88,6 +88,9 @@ function ResetPassword() {
                                     required
                                 />
                             )}
+                            isOptionEqualToValue={(option, value) =>
+                                option.value === value?.value
+                              }
                             sx={{ "& input": { color: "#6c757d" } }} // Set font color to #6c757d
                         />
                         <TextField
