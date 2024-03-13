@@ -4,13 +4,22 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Typography } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import routes from '../../routes';
+import {  MobileToggleSidebar } from "../../actions/generalActions";
+
 
 function AppSidebar() {
   const location = useLocation();
+  const dispatch = useDispatch();
   const currentRoute = routes.find(route => route.path === location.pathname);
     const [selected, setSelected] = useState(currentRoute.name);
+    const [broken, setBroken] = useState(window.matchMedia('(max-width: 800px)').matches);
     const navigateTo = useNavigate();
-    const { collapsed } = useSelector((state) => state.sidebar)
+    const { collapsed, toggle } = useSelector((state) => state.sidebar);
+
+    const handleClick = () => {
+      dispatch(MobileToggleSidebar());
+    };
+
 
     const handleNavigation = (path) => {
         navigateTo(path);
@@ -36,7 +45,7 @@ function AppSidebar() {
     return (
         <div className="mainContainer w-max bg-[#f5f7fb] min-h-screen">
         <div style={{ display: 'flex', height: '100%', minHeight: '400px', background:'#f5f7fb', marginLeft:'30px', paddingTop:'30px' }}>
-            <Sidebar collapsed={collapsed} width={"240px"} style={{ minHeight:'50vh', maxHeight:'98%'}} backgroundColor="#fff" className="transition-all duration-100 ease-out shadow-md rounded-md p-2 bg-white">
+            <Sidebar onBackdropClick={() => handleClick()} toggled={toggle} customBreakPoint="800px" onBreakPoint={setBroken} collapsed={collapsed} width={"240px"} style={{ minHeight:'50vh', maxHeight:'98%'}} backgroundColor="#fff" className="transition-all duration-100 ease-out shadow-md rounded-md p-2 bg-white">
             <Menu  
                  menuItemStyles={{
                   button: ({ level, active, disabled }) => {
@@ -44,6 +53,7 @@ function AppSidebar() {
                         color: active ? '#4a81d4' : '#6e768e',
                         '&:hover': {
                           backgroundColor: '#fff',
+                          color:'#4a81d4'
                         },
                         height:'40px' 
                       };
@@ -58,7 +68,7 @@ function AppSidebar() {
                     />
                 <SubMenu label="Masters" className="!text-sm">
                 <Item
-                      title="Users"
+                      title="User List"
                       to="/users"
                       selected={selected}
                       setSelected={setSelected}

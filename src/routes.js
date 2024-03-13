@@ -14,7 +14,7 @@ const routes = [
     { path: '/home', name: 'Dashboard', element: Dashboard },
     { path: '/changepassword', name: 'Change Password', element: UpdatePassword },
     { path: '/resetpassword', name: 'Reset Password', element: ResetPassword },
-    { path: '/users', name: 'Users', element: Users },
+    { path: '/users', name: 'User List', element: Users },
     { path: '/item', name: 'Items', element: Items },
     { path: '/itemGroup', name: 'Item Groups', element: ItemGroup },
     { path: '/pickListValue', name: 'Pick List Values', element: PicklistValue },

@@ -7,7 +7,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
-import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,160 +23,158 @@ import {
   Menu,
   FormControlLabel,
   TextField,
+  Autocomplete,
+  Stack,
+  InputLabel,
 } from "@mui/material";
-import SouthIcon from "@mui/icons-material/South";
-import NorthIcon from "@mui/icons-material/North";
-const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "ItemsMaster" });
+const csvConfig = mkConfig({
+  useKeysAsHeaders: true,
+  filename: "PickListTypes",
+});
 
 const generateMockData = () => {
   const mockData = [];
   for (let i = 1; i <= 100; i++) {
     mockData.push({
       Id: i,
-      Name: `Item ${i}`,
-      Image: `https://picsum.photos/seed/picsum/200/300`,
-      group: `Group ${(i % 5) + 1}`,
-      UoM: i % 2 === 0 ? "pcs" : "kg",
-      MRP: Math.floor(Math.random() * 500) + 50,
-      inActive: i % 3 === 0 ? "True" : "False",
-      createdBy: `User ${(i % 3) + 1}`,
-      createdOn: "2022-01-01",
+      "Name": `User ${i}`,
+      "Email": `User@${i}gmail.com`,
+      "Role": i % 2 === 0 ? "Admin" : "User",
+      "InActive": i % 2 === 0 ? "Yes" : "No",
     });
   }
   return mockData;
 };
-
 const mockData = generateMockData();
 
-function Users() {
+const Users = () => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+  const [pickListTypes, setPickListTypes] = useState({ name: "", isactive: false });
+  const [error, setError] = useState({ name: "", type: "" });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState({
+    Id: true,
+    "Name": true,
+    "Email": true,
+    "Role": true,
+    "InActive": true,
+    Delete: true,
+    Edit: true,
+  });
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [visibleColumns, setVisibleColumns] = useState({
-      Id: true,
-      Name: true,
-      Image: true,
-      group: true,
-      UoM: true,
-      MRP: true,
-      inActive: true,
-      createdBy: true,
-      createdOn: true,
-      Delete: true,
-      Edit: true,
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleCopyVisibleData = () => {
+    const visibleData = mockData
+      .map((item) => {
+        return Object.keys(item)
+          .filter((key) => visibleColumns[key])
+          .map((key) => item[key])
+          .join(", ");
+      })
+      .join("\n");
+    navigator.clipboard.writeText(visibleData);
+  };
+
+  const handlePrint = () => {
+    // Logic to print table data
+    window.print();
+  };
+
+  const handleExportCSV = () => {
+    // Logic to export table data to CSV
+    const csv = generateCsv(csvConfig)(mockData);
+    download(csvConfig)(csv);
+  };
+
+  const handleSearchChange = (event) => {
+    let searchValue =event.target.value.trim();
+    setSearchTerm(searchValue);
+  };
+
+  const handleDelete = (id) => {
+    console.log(id);
+  };
+  const handleEdit = (id) => {
+    console.log(id);
+  };
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+  
+
+  const handleToggleColumn = (column) => {
+    setVisibleColumns({
+      ...visibleColumns,
+      [column]: !visibleColumns[column],
     });
-    const navigate = useNavigate();
-  
-    const handleChangePage = (event, newPage) => {
-      setPage(newPage);
-    };
-  
-    const handleChangeRowsPerPage = (event) => {
-      setRowsPerPage(parseInt(event.target.value, 10));
-      setPage(0);
-    };
-  
-    const handleSearchChange = (event) => {
-      setSearchTerm(event.target.value);
-    };
-  
-    const handleDelete = (id) => {
-      console.log(id);
-    };
-    const handleEdit = (id) => {
-      console.log(id);
-    };
-  
-    const handleSort = (key) => {
-      let direction = "asc";
-      if (sortConfig.key === key && sortConfig.direction === "asc") {
-        direction = "desc";
-      }
-      setSortConfig({ key, direction });
-    };
-  
-    const handleToggleColumn = (column) => {
-      setVisibleColumns({
-        ...visibleColumns,
-        [column]: !visibleColumns[column],
-      });
-    };
-  
-    const handleMenuOpen = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-  
-    const handleMenuClose = () => {
-      setAnchorEl(null);
-    };
-  
-    const handleExportCSV = () => {
-      // Logic to export table data to CSV
-      const csv = generateCsv(csvConfig)(mockData);
-      download(csvConfig)(csv);
-    };
-  
-    const handlePrint = () => {
-      // Logic to print table data
-      window.print();
-    };
-  
-    const handleCopyVisibleData = () => {
-      const visibleData = mockData
-        .map((item) => {
-          return Object.keys(item)
-            .filter((key) => visibleColumns[key])
-            .map((key) => item[key])
-            .join(", ");
-        })
-        .join("\n");
-      navigator.clipboard.writeText(visibleData);
-    };
-  
-    const sortedData = mockData.sort((a, b) => {
-      if (sortConfig.direction === "asc") {
-        return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
-      } else {
-        return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
-      }
-    });
-  
-    const filteredData = sortedData.filter((item) => {
-      return Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  
-    const visibleColumnsArray = Object.keys(visibleColumns).filter(
-      (column) => visibleColumns[column]
+  };
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const sortedData = mockData.sort((a, b) => {
+    if(sortConfig.direction === ""){
+      return
+    }
+    if (sortConfig.direction === "asc") {
+      return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
+    } else {
+      return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
+    }
+  });
+
+  const filteredData = sortedData.filter((item) => {
+    return Object.values(item).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
     );
-  
-    return (
-      <Container className="bg-white p-6 mb-6 rounde">
-        <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2}>
-          <Button
-            variant="contained"
-            type="submit"
-            sx={{
-              backgroundColor: "#5671f0",
-              borderColor: "#5671f0",
-              textTransform: "none",
-              boxShadow: "0 0 0 rgba(86,113,240,.5)",
-              "&:hover": {
-                backgroundColor: "#3353ed",
-                borderColor: "#274aec",
-              },
-            }}
-            onClick={() => {
-              navigate("/item/create");
-            }}
-          >
-            Add New
-          </Button>
-        </Box>
+  });
+
+  const visibleColumnsArray = Object.keys(visibleColumns).filter(
+    (column) => visibleColumns[column]
+  );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const removeError = () => {
+      setTimeout(() => {
+        setError({ name: "", type: "" });
+      }, 3000);
+    };
+    if (!pickListTypes.name.trim()) {
+      setError((prevErrors) => ({
+        ...prevErrors,
+        name: "Please enter a name",
+      }));
+      removeError();
+      return;
+    }
+  };
+
+  return (
+    <Container>
+   
+      <Box className="bg-white p-6 mb-6 rounded">
         <Box
           display="flex"
           justifyContent="space-between"
@@ -234,87 +231,6 @@ function Users() {
             </FormControl>
             <Typography variant="body1">entries</Typography>
           </Box>
-          <Box display="flex" alignItems="center">
-            <Button
-              sx={{
-                bgcolor: "#6c757d",
-                borderRadius: "0",
-                padding: "0.45rem 0.9rem",
-                textTransform: "none",
-                color: "#fff",
-                borderRadius: "0.15rem 0 0 0.15rem",
-                "&:hover": { bgcolor: "#5a6268" },
-              }}
-              size="small"
-              onClick={handleCopyVisibleData}
-            >
-              Copy
-            </Button>
-            <Button
-              sx={{
-                bgcolor: "#6c757d",
-                borderRadius: "0",
-                padding: "0.45rem 0.9rem",
-                textTransform: "none",
-                color: "#fff",
-                "&:hover": { bgcolor: "#5a6268" },
-              }}
-              size="small"
-              onClick={handleExportCSV}
-            >
-              CSV
-            </Button>
-            <Button
-              sx={{
-                bgcolor: "#6c757d",
-                borderRadius: "0",
-                padding: "0.45rem 0.9rem",
-                textTransform: "none",
-                color: "#fff",
-                "&:hover": { bgcolor: "#5a6268" },
-              }}
-              size="small"
-              onClick={handlePrint}
-            >
-              Print
-            </Button>
-            <Button
-              sx={{
-                bgcolor: "#6c757d",
-                borderRadius: "0",
-                padding: "0.45rem 0.9rem",
-                textTransform: "none",
-                color: "#fff",
-                borderRadius: " 0 0.15rem 0.15rem 0",
-                "&:hover": { bgcolor: "#5a6268" },
-              }}
-              size="small"
-              onClick={handleMenuOpen}
-            >
-              Column visibility
-            </Button>
-            <Menu
-              id="column-visibility-menu"
-              anchorEl={anchorEl}
-              keepMounted
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              {Object.keys(visibleColumns).map((column) => (
-                <MenuItem key={column}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={visibleColumns[column]}
-                        onChange={() => handleToggleColumn(column)}
-                      />
-                    }
-                    label={column}
-                  />
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
           <TextField
             label="Search"
             type="search"
@@ -330,7 +246,10 @@ function Users() {
           />
         </Box>
         <Box>
-          <TableContainer component={Paper} sx={{ border: "1px solid #dee2e6" }}>
+          <TableContainer
+            component={Paper}
+            sx={{ border: "1px solid #dee2e6" }}
+          >
             <Table>
               <TableHead
                 sx={{ backgroundColor: "white", border: "1px solid #dee2e6" }}
@@ -370,17 +289,12 @@ function Users() {
                     .map((row) => (
                       <TableRow key={row.Id}>
                         {visibleColumnsArray.map((column) => (
-                          <TableCell key={column} sx={{ color: "#6c757d", fontSize: ".8rem" }}>
-                          {column === "Image" ? (
-                            <img
-                              src={row[column]}
-                              alt={row.Name}
-                              style={{ width: 50, height: 50 }}
-                            />
-                          ) : (
-                            <>{row[column]}</>
-                          )}
-                         {column === "Edit" && (
+                          <TableCell
+                            key={column}
+                            sx={{ color: "#6c757d", fontSize: ".8rem" }}
+                          >
+                            {row[column]}
+                            {column === "Edit" && (
                                 <IconButton
                                   size="small"
                                   onClick={() => handleEdit(row.Id)}
@@ -398,7 +312,7 @@ function Users() {
                                     <DeleteIcon />
                                   </IconButton>
                                 )}
-                        </TableCell>                        
+                          </TableCell>
                         ))}
                       </TableRow>
                     ))
@@ -406,7 +320,11 @@ function Users() {
               </TableBody>
             </Table>
           </TableContainer>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="body2" color="textSecondary">
               Showing {page * rowsPerPage + 1} to{" "}
               {Math.min((page + 1) * rowsPerPage, filteredData.length)} of{" "}
@@ -424,8 +342,9 @@ function Users() {
             />
           </Box>
         </Box>
-      </Container>
-    );
-}
+      </Box>
+    </Container>
+  );
+};
 
-export default Users
+export default Users;

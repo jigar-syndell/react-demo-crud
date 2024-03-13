@@ -251,7 +251,7 @@ const ItemGroup = () => {
             }}
           >
             <FormControlLabel
-              control={<Checkbox checked={!!itemGroup.isActive} />}
+              control={<Checkbox checked={!!itemGroup.isactive} />}
               label="IsActive"
               onChange={(e) =>
                 setItemGroup({ ...itemGroup, isactive: e.target.checked })

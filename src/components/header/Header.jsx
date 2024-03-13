@@ -10,20 +10,26 @@ import MenuList from "@mui/material/MenuList";
 import Divider from "@mui/material/Divider";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import Stack from "@mui/material/Stack";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import PersonIcon from "@mui/icons-material/Person";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleSidebar } from "../../actions/generalActions";
+import { toggleSidebar, MobileToggleSidebar } from "../../actions/generalActions";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Link } from "react-router-dom";
 
 function Header() {
   const dispatch = useDispatch();
-  const handleClick = () => {
-    dispatch(toggleSidebar());
+  const handleClick = (param) => {
+    if(param){
+      dispatch(MobileToggleSidebar());
+    }else{
+      console.log("called this")
+      dispatch(toggleSidebar());
+    }
   };
-  const { collapsed } = useSelector((state) => state.sidebar);
+  const [broken, setBroken] = useState(window.matchMedia('(max-width: 800px)').matches);
+  const { collapsed, toggle } = useSelector((state) => state.sidebar);
+    const [remountKey, setRemountKey] = useState(0);
 
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
@@ -59,6 +65,18 @@ function Header() {
     prevOpen.current = open;
   }, [open]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setBroken(window.matchMedia('(max-width: 800px)').matches);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <header
       className="bg-[#fff] text-white py-4  flex justify-between items-center m-auto"
@@ -66,13 +84,25 @@ function Header() {
     >
       <div className="w-full flex justify-between items-center">
         <div className="flex items-center">
-          <img
-            src="./Navigator-ERP_1.png"
-            alt="Logo"
-            className={`mr-4 ${
-              !collapsed ? "w-52 h-10" : "w-[70px] h-5"
-            } transition-all duration-300 ease-in-out`}
-          />
+        <Link to="/home">
+            <img
+              src="/Navigator-ERP_1.png"
+              alt="Logo"
+              className={`mr-4 ${
+                !collapsed ? "w-52 h-10" : "w-[70px] h-5"
+              } transition-all duration-300 ease-in-out`}
+            />
+          </Link>
+          {broken ? (
+            <button
+            className="sb-button"
+            onClick={() => {
+              handleClick("value");
+            }}
+          >
+            <MenuIcon sx={{ color: "#323a46", fontSize: 30 }} />
+          </button>
+          ):
           <button
             className="sb-button"
             onClick={() => {
@@ -81,6 +111,7 @@ function Header() {
           >
             <MenuIcon sx={{ color: "#323a46", fontSize: 30 }} />
           </button>
+          }
         </div>
 
         <div>

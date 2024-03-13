@@ -1,6 +1,9 @@
 
 
 export const toggleSidebar = () => {
-    console.log("caasdsa")
     return { type: "TOGGLE_SIDEBAR" };
+  };
+
+export const MobileToggleSidebar = () => {
+    return { type: "TOGGLE_SIDEBAR_MOBILE" };
   };
