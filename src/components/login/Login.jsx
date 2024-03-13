@@ -21,6 +21,7 @@ function Login({ isPasswordResetPage }) {
   const [showPassword, setShowPassword] = useState(false);
   const location = useLocation();
   const [loginErrors, setLoginErrors] = useState({ email: "", password: "" });
+  const [resetPassMail, setResetPassMail] = useState("");
   const [tagLine, setTagLine] = useState(
     "Enter your email address and password to access the admin panel."
   );
@@ -231,8 +232,10 @@ function Login({ isPasswordResetPage }) {
                       Email address*
                     </label>
                     <input
-                      id="email"
+                      id="reset-email"
                       type="email"
+                      value={resetPassMail}
+                      onChange={(e) => setResetPassMail(e.target.value)}
                       className="block w-full h-[calc(1.5em + 0.9rem + 2px)] px-4 py-2 text-sm font-normal leading-5 text-gray-700 bg-white border border-solid border-#ced4da rounded focus:outline-none focus:ring focus:border-blue-500 transition duration-150 ease-in-out"
                     />
                     {loginErrors.email && (
