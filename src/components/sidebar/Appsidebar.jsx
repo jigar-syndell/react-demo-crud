@@ -10,12 +10,13 @@ import {  MobileToggleSidebar } from "../../actions/generalActions";
 function AppSidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
+  console.log(location.pathname)
+
   const currentRoute = routes.find(route => route.path === location.pathname);
-    const [selected, setSelected] = useState(currentRoute.name);
+    const [selected, setSelected] = useState(currentRoute?.name || '');
     const [broken, setBroken] = useState(window.matchMedia('(max-width: 800px)').matches);
     const navigateTo = useNavigate();
     const { collapsed, toggle } = useSelector((state) => state.sidebar);
-
     const handleClick = () => {
       dispatch(MobileToggleSidebar());
     };
@@ -26,8 +27,7 @@ function AppSidebar() {
     };
 
     const Item = ({ title, to, selected, setSelected }) => {
-      console.log(title)
-      console.log(selected)
+
       return (
         <MenuItem
           active={selected === title}

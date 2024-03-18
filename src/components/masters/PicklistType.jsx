@@ -12,7 +12,9 @@ import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import CustomPopup from "../../utils/customPopup";
 import { IconButton, InputAdornment } from '@mui/material';
+import Swal from 'sweetalert2'
 import {
   Box,
   Typography,
@@ -55,6 +57,7 @@ const PicklistType = () => {
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [pickListTypes, setPickListTypes] = useState({ name: "", isactive: false });
   const [error, setError] = useState({ name: "", type: "" });
+  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
   const [anchorEl, setAnchorEl] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState({
     Id: true,
@@ -85,6 +88,10 @@ const PicklistType = () => {
       })
       .join("\n");
     navigator.clipboard.writeText(visibleData);
+    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+    setTimeout(() => {
+      setDisplayPopup({show : false, type:"", mgs:""})
+    }, 3000);
   };
 
   const handlePrint = () => {
@@ -96,6 +103,10 @@ const PicklistType = () => {
     // Logic to export table data to CSV
     const csv = generateCsv(csvConfig)(mockData);
     download(csvConfig)(csv);
+    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setTimeout(() => {
+      setDisplayPopup({show : false, type:"", mgs:""})
+    }, 3000);
   };
 
   const handleSearchChange = (event) => {
@@ -103,11 +114,36 @@ const PicklistType = () => {
   };
 
   const handleDelete = (id) => {
-    console.log(id);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your file has been deleted.",
+          icon: "success"
+        });
+      }
+    });
   };
   const handleEdit = (id) => {
     console.log(id);
+    let filteredData = mockData.filter(item => item.Id === id);
+    filteredData = filteredData[0]
+    console.log(filteredData)
+    setPickListTypes  ({name : filteredData['Pick List Type'] , isactive : filteredData['InActive?'] === 'Yes' ? true : false   });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
+
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -156,6 +192,7 @@ const PicklistType = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+   
     const removeError = () => {
       setTimeout(() => {
         setError({ name: "", type: "" });
@@ -169,6 +206,14 @@ const PicklistType = () => {
       removeError();
       return;
     }
+    Swal.fire({
+      position: "top-end",
+      icon: "success",
+      title: "Your work has been saved",
+      showConfirmButton: false,
+      timer: 1500
+    });
+    
   };
 
   return (
@@ -489,6 +534,7 @@ const PicklistType = () => {
           </Box>
         </Box>
       </Box>
+      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
     </Container>
   );
 };

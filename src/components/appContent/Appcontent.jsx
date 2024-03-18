@@ -7,11 +7,14 @@ import DynamicBreadcrumb from '../../utils/breadcrumb';
 
 const Appcontent = () => {
     const location = useLocation();
-    const currentRoute = routes.find(route => route.path === location.pathname);
+    const currentRoute = routes.find(route => {
+        const regex = new RegExp(`^${route.path.replace(/:\w+/g, '[^/]+')}$`);
+        return regex.test(location.pathname);
+    })
 
     return (
         <Container maxWidth="lg" className="px-4" sx={{ margin: 0, padding: 0 }}>
-            <DynamicBreadcrumb pageTitle={currentRoute.name} />
+            <DynamicBreadcrumb pageTitle={currentRoute?.name} />
             <Suspense fallback={<CircularProgress color="primary" />}>
                 <Routes>
                     {routes.map((route, idx) => (

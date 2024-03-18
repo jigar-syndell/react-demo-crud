@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import Swal from 'sweetalert2'
 import { IconButton, InputAdornment } from '@mui/material';
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@mui/material";
 import SouthIcon from "@mui/icons-material/South";
 import NorthIcon from "@mui/icons-material/North";
+import CustomPopup from "../../utils/customPopup";
 const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "ItemsMaster" });
 
 const generateMockData = () => {
@@ -53,6 +55,7 @@ const Items = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [anchorEl, setAnchorEl] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState({
@@ -84,11 +87,28 @@ const Items = () => {
   };
 
   const handleDelete = (id) => {
-    console.log(id);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your file has been deleted.",
+          icon: "success"
+        });
+      }
+    });
   };
   const handleEdit = (id) => {
-    console.log(id);
+    navigate(`/item/edit/${id}`)
   };
+
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -117,6 +137,10 @@ const Items = () => {
     // Logic to export table data to CSV
     const csv = generateCsv(csvConfig)(mockData);
     download(csvConfig)(csv);
+    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setTimeout(() => {
+      setDisplayPopup({show : false, type:"", mgs:""})
+    }, 3000);
   };
 
   const handlePrint = () => {
@@ -134,6 +158,10 @@ const Items = () => {
       })
       .join("\n");
     navigator.clipboard.writeText(visibleData);
+    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+    setTimeout(() => {
+      setDisplayPopup({show : false, type:"", mgs:""})
+    }, 3000);
   };
 
   const sortedData = mockData.sort((a, b) => {
@@ -426,6 +454,7 @@ const Items = () => {
           />
         </Box>
       </Box>
+      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
     </Container>
   );
 };

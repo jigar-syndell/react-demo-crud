@@ -11,6 +11,7 @@ import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import Swal from 'sweetalert2'
 import { IconButton, InputAdornment } from '@mui/material';
 import {
   Box,
@@ -86,17 +87,6 @@ const Users = () => {
     navigator.clipboard.writeText(visibleData);
   };
 
-  const handlePrint = () => {
-    // Logic to print table data
-    window.print();
-  };
-
-  const handleExportCSV = () => {
-    // Logic to export table data to CSV
-    const csv = generateCsv(csvConfig)(mockData);
-    download(csvConfig)(csv);
-  };
-
   const handleSearchChange = (event) => {
     let searchValue =event.target.value.trim();
     setSearchTerm(searchValue);
@@ -104,6 +94,23 @@ const Users = () => {
 
   const handleDelete = (id) => {
     console.log(id);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your file has been deleted.",
+          icon: "success"
+        });
+      }
+    });s
   };
   const handleEdit = (id) => {
     console.log(id);

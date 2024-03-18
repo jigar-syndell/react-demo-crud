@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Grid,
@@ -11,8 +11,8 @@ import {
   Checkbox
 } from '@mui/material';
 
-function CreateItem() {
-  const [formData, setFormData] = useState({
+function CreateItem({ initialValues, onSubmit }) {
+  const [formData, setFormData] = useState(initialValues || {
     itemCode: '',
     itemTitle: '',
     itemGroup: '',
@@ -23,6 +23,20 @@ function CreateItem() {
     image: null
   });
   const [errors, setErrors] = useState({});
+  console.log(formData)
+
+  useEffect(() => {
+    setFormData(initialValues || {
+      itemCode: '',
+      itemTitle: '',
+      itemGroup: '',
+      itemUoM: '',
+      isActive: false,
+      mrp: '',
+      imagePreview: null,
+      image: null
+    });
+  }, [initialValues]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -58,8 +72,7 @@ function CreateItem() {
       image: ''
     });
   };
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     // Validate form fields
     const newErrors = {};
@@ -72,14 +85,17 @@ function CreateItem() {
   
     setErrors(newErrors);
     setTimeout(() => {
-    setErrors({});
+      setErrors({});
     }, 3000);
   
     if (Object.keys(newErrors).length === 0) {
-      console.log("Form submitted:", formData);
-      // Handle form submission logic
+      if(initialValues){
+        onSubmit(formData);
+      }
+      console.log(formData);
     }
   };
+  
 
   return (
     <Container className='bg-white p-6'>

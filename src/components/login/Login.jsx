@@ -15,7 +15,6 @@ function Login({ isPasswordResetPage }) {
     password: "",
     remeberme: false,
   };
-  console.log(isPasswordResetPage)
   const [isLoginPage, setisLoginPage] = useState(isPasswordResetPage != true);
   const [loginCred, setLoginCred] = useState(loginInitialData);
   const [showPassword, setShowPassword] = useState(false);
