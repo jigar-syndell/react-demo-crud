@@ -106,7 +106,7 @@ function CreateItem({ initialValues, onSubmit }) {
               {formData.imagePreview ? (
                 <img src={formData.imagePreview} alt="Item Preview" style={{ maxWidth: '100%', maxHeight: '100%' }} />
               ) : (
-                <Typography variant="body1">No image selected</Typography>
+               <label htmlFor="image-upload" className="mr-2 cursor-pointer">No image selected</label>
               )}
             </Box>
           </Grid>

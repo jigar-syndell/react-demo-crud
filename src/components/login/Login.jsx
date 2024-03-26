@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import Box from "@mui/material/Box";
+import { loginApi } from "../../apis/api";
 
 function Login({ isPasswordResetPage }) {
   const url = import.meta.env.VITE_BACKEND_APP_URI
@@ -58,23 +59,23 @@ function Login({ isPasswordResetPage }) {
   };
 
   // login handler
-  const loginHandler = (e) => {
+  const loginHandler = async (e) => {
     e.preventDefault();
-
+  
     const validateEmail = (email) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return email.trim() !== "" && emailRegex.test(email);
     };
-
+  
     const validatePassword = (password) => {
       // const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[0-9]).{8,}$/;
       // return password.trim() !== "" && passwordRegex.test(password);
-      return true
+      return true;
     };
-
+  
     // Validate email
     const emailValid = validateEmail(loginCred.email);
-
+  
     // Update errors state for email
     setLoginErrors({
       email: emailValid
@@ -84,11 +85,11 @@ function Login({ isPasswordResetPage }) {
         : "Invalid email format",
       password: "", // Reset password error when email is being corrected
     });
-
+  
     // If email is valid, check the password
     if (emailValid) {
       const passwordValid = validatePassword(loginCred.password);
-
+  
       // Update errors state for password
       setLoginErrors((prevErrors) => ({
         ...prevErrors,
@@ -96,28 +97,40 @@ function Login({ isPasswordResetPage }) {
           ? ""
           : "Password must contain 1 capital letter, 1 special character, 1 number, and be at least 8 characters long",
       }));
-      setTimeout(() => {
-        setLoginErrors({ email: "", password: "" });
-      }, 3000);
-
+  
       // If both email and password are valid, proceed with login
       if (passwordValid) {
         console.log(loginCred);
-        navigate('/home')
-        // const formData = new FormData();
-        // formData.append('email', 'admin@gmail.com');
-        // formData.append('password', 'admin');
-        // formData.append('remember', 'on');
-        // formData.append('Login', '');
-        // try {
-        //   const {data} = axios.post(`${url}/login`, formData,jsonconfig )
+        try {
           
-        // } catch (error) {
-          
-        // }
+          const formData = new FormData()
+          formData.append("email" , loginCred.email)
+          formData.append("password" , loginCred.password)
+          const response = await loginApi(formData)
+          // Handle successful login response here
+         
+          if(response.success){
+            // redirect to dashboard
+            navigate("/home");
+          }else{
+            setLoginErrors((prevErrors) => ({
+              ...prevErrors,
+              password: "These credentials do not match our records." 
+            }));
+            setTimeout(() => {
+              setLoginErrors({});
+            }, 5000);
+          }
+          // Navigate to the home page or perform other actions
+        } catch (error) {
+          // Handle error
+          console.error("Error during login:", error);
+          // Display error message to the user, e.g., setLoginErrors({ email: "Error occurred during login", password: "" });
+        }
       }
     }
   };
+  
   return (
     <>
       <div

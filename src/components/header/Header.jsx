@@ -121,9 +121,10 @@ function Header() {
             aria-controls={open ? "composition-menu" : undefined}
             aria-expanded={open ? "true" : undefined}
             aria-haspopup="true"
-            startIcon={<AccountCircleIcon />}
-            endIcon={<KeyboardArrowDownIcon />}
+            startIcon={<AccountCircleIcon  fontSize="large" sx={{color :"#000", fontSize: '2rem !important' }} />}
+            endIcon={<KeyboardArrowDownIcon  fontSize="small" sx={{color :"#6c757d", fontSize: '1rem !important' }} />}
             onClick={handleToggle}
+            sx={{textTransform : "none", color :"#6c757d"}}
           >
             Admin
           </Button>
@@ -179,7 +180,7 @@ function Header() {
                        to="/"
                       onClick={handleClose}>
                         <ListItemIcon>
-                          <LogoutIcon fontSize="small" />
+                          <LogoutIcon />
                         </ListItemIcon>
                         Logout
                       </MenuItem>

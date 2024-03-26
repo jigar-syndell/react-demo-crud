@@ -125,21 +125,6 @@ const Users = () => {
   };
   
 
-  const handleToggleColumn = (column) => {
-    setVisibleColumns({
-      ...visibleColumns,
-      [column]: !visibleColumns[column],
-    });
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   const sortedData = mockData.sort((a, b) => {
     if(sortConfig.direction === ""){
       return

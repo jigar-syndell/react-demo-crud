@@ -69,7 +69,7 @@ function UpdatePassword() {
                         transition: "all .1s ease-out",
                     }}
                 >
-                    <form onSubmit={handleSubmit} style={{ width: "50%" }}>
+                    <form onSubmit={handleSubmit} className="w-2/4 max-md:w-full">
                         <TextField
                             name="currentPassword"
                             label="Current Password"

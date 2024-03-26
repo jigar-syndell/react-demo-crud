@@ -333,6 +333,13 @@ const ItemGroup = () => {
           justifyContent="space-between"
           alignItems="center"
           mb={2}
+          sx={{
+            '@media (max-width: 800px)': {
+              flexDirection: 'column',
+              alignItems: 'center',
+              rowGap:'10px'
+            },
+          }}
         >
           <Box display="flex" alignItems="center" sx={{ columnGap: "5px" }}>
             <Typography variant="body1">Show</Typography>

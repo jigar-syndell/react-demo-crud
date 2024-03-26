@@ -9,6 +9,7 @@ const CreateItem = React.lazy(() => import('./components/masters/CreateItem'))
 const EditItem = React.lazy(() => import('./components/masters/Edititem'))
 const ItemGroup = React.lazy(() => import('./components/masters/ItemGroup'))
 const PicklistType = React.lazy(() => import('./components/masters/PicklistType'))
+const Profile = React.lazy(() => import('./components/profile/Profile'))
 const PicklistValue = React.lazy(() => import('./components/masters/PicklistValue'))
 
 const routes = [
@@ -19,6 +20,7 @@ const routes = [
     { path: '/users', name: 'User List', element: Users },
     { path: '/item', name: 'Items', element: Items },
     { path: '/test', name: 'Test', element: Test },
+    { path: '/user-edit/:id', name: 'User Entry', element: Profile },
     { path: '/itemGroup', name: 'Item Groups', element: ItemGroup },
     { path: '/pickListValue', name: 'Pick List Values', element: PicklistValue },
     { path: '/pickListType', name: 'Pick List Type', element: PicklistType },

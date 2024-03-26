@@ -43,7 +43,7 @@ function AppSidebar() {
     };
 
     return (
-        <div className="mainContainer w-max bg-[#f5f7fb] min-h-screen">
+        <div className="mainContainer w-max bg-[#f5f7fb] min-h-screen max-sm:w-0">
         <div style={{ display: 'flex', height: '100%', minHeight: '400px', background:'#f5f7fb', marginLeft:'30px', paddingTop:'30px' }}>
             <Sidebar onBackdropClick={() => handleClick()} toggled={toggle} customBreakPoint="800px" onBreakPoint={setBroken} collapsed={collapsed} width={"240px"} style={{ minHeight:'50vh', maxHeight:'98%'}} backgroundColor="#fff" className="transition-all duration-100 ease-out shadow-md rounded-md p-2 bg-white">
             <Menu  

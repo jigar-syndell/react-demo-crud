@@ -165,6 +165,9 @@ const Items = () => {
   };
 
   const sortedData = mockData.sort((a, b) => {
+    if(sortConfig.direction === ""){
+      return
+    }
     if (sortConfig.direction === "asc") {
       return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
     } else {
@@ -210,6 +213,13 @@ const Items = () => {
         justifyContent="space-between"
         alignItems="center"
         mb={2}
+        sx={{
+          '@media (max-width: 800px)': {
+            flexDirection: 'column',
+            alignItems: 'center',
+            rowGap:'10px'
+          },
+        }}
       >
         <Box display="flex" alignItems="center" sx={{ columnGap: "5px" }}>
           <Typography variant="body1">Show</Typography>
@@ -233,7 +243,7 @@ const Items = () => {
                 ".MuiOutlinedInput-notchedOutline": { border: 0 },
                 borderRadius: "0.25rem",
                 "&:focus": {
-                  borderColor: "#6c757d", // Change border color on focus
+                  borderColor: "#6c757d",
                 },
                 "&.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
                   {
@@ -358,7 +368,7 @@ const Items = () => {
       </Box>
       <Box>
         <TableContainer component={Paper} sx={{ border: "1px solid #dee2e6" }}>
-          <Table>
+          <Table sx={{overflowX : 'auto'}}>
             <TableHead
               sx={{ backgroundColor: "white", border: "1px solid #dee2e6" }}
             >

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState, useRef  } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -15,6 +15,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import CustomPopup from "../../utils/customPopup";
 import Swal from 'sweetalert2'
 import { IconButton, InputAdornment } from '@mui/material';
+import { deletePickListValue, getPickListValues } from "../../apis/masters/pickListValue";
+
 import {
   Box,
   Typography,
@@ -27,34 +29,17 @@ import {
   FormControlLabel,
   TextField,
   Autocomplete,
-  Stack,
-  InputLabel,
 } from "@mui/material";
 const csvConfig = mkConfig({
   useKeysAsHeaders: true,
   filename: "PickListValue",
 });
 
-const generateMockData = () => {
-  const mockData = [];
-  for (let i = 1; i <= 100; i++) {
-    mockData.push({
-      Id: i,
-      "Pick List Value": `Pick List Type ${i}`,
-      "Pick List Value Type": `Type ${i % 3}`,
-      "InActive?": i % 2 === 0 ? "Yes" : "No",
-      "Created By": `User ${(i % 3) + 1}`,
-      "Created On": "2022-01-01",
-    });
-  }
-  return mockData;
-};
-const mockData = generateMockData();
-
 const Picklistvalue = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pickListValueData, setPickListValueData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [pickListValue, setPickListValue] = useState({ name: "", isactive: false });
   const [pickListValueType, setPickListValueType] = useState(null);
@@ -72,6 +57,26 @@ const Picklistvalue = () => {
     Edit: true,
   });
 
+  // fetch latestdata
+  const fetchLatestData = ()=>{
+    getPickListValues()
+    .then((response) => {
+      console.log(response)
+      if (response.success) {
+        setPickListValueData(response.data);
+      } else {
+        console.error("Failed to fetch pick list types:", response.error);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching pick list types:", error);
+    });
+  }
+  
+  useEffect(() => {
+    fetchLatestData();
+  }, []);
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -82,7 +87,7 @@ const Picklistvalue = () => {
   };
 
   const handleCopyVisibleData = () => {
-    const visibleData = mockData
+    const visibleData = pickListValueData
       .map((item) => {
         return Object.keys(item)
           .filter((key) => visibleColumns[key])
@@ -104,7 +109,7 @@ const Picklistvalue = () => {
 
   const handleExportCSV = () => {
     // Logic to export table data to CSV
-    const csv = generateCsv(csvConfig)(mockData);
+    const csv = generateCsv(csvConfig)(pickListValueData);
     download(csvConfig)(csv);
     setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
     setTimeout(() => {
@@ -127,22 +132,45 @@ const Picklistvalue = () => {
       confirmButtonText: "Yes, delete it!"
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your file has been deleted.",
-          icon: "success"
-        });
+        deletePickListValue(id)
+          .then((response) => {
+            if (response.success) {
+              Swal.fire({
+                title: "Deleted!",
+                text: response.message || "Your Pick List value has been created.",
+                icon: "success"
+              });
+              // fetch updated data
+              fetchLatestData();
+
+            } else {
+              console.log(response.error.data.message)
+              Swal.fire({
+                title: "Error!",
+                text: response.error.data.message || "Failed to delete the Pick List value.",
+                icon: "error"
+              });
+            }
+          })
+          .catch((error) => {
+            Swal.fire({
+              title: "Error!",
+              text: "Failed to delete the Pick List value.",
+              icon: "error"
+            });
+            console.error("Error deleting Pick List value:", error);
+          });
       }
     });
   };
   const handleEdit = (id) => {
     console.log(id);
-    let filteredData = mockData.filter(item => item.Id === id);
+    let filteredData = pickListValueData.filter(item => item.id === id);
     filteredData = filteredData[0]
-
     console.log(filteredData)
-    setPickListValue({name : filteredData['Pick List Value'] , isactive : filteredData['InActive?'] === 'Yes' ? true : false   });
-    setPickListValueType( { label:`${filteredData['Pick List Value Type']}`, value: `${filteredData['Pick List Value Type']}` })
+
+    setPickListValue({name : filteredData.pick_list_value, isactive : filteredData.in_active === '1' ? true : false   });
+    setPickListValueType( { label:`${filteredData.pick_list_types.pick_list_type}`, value: `${filteredData.pick_list_types.id}` })
     window.scrollTo({
       top: 0,
       behavior: "smooth"
@@ -174,7 +202,7 @@ const Picklistvalue = () => {
     setAnchorEl(null);
   };
 
-  const sortedData = mockData.sort((a, b) => {
+  const sortedData = pickListValueData.sort((a, b) => {
     if(sortConfig.direction === ""){
       return
     }
@@ -335,6 +363,13 @@ const Picklistvalue = () => {
           justifyContent="space-between"
           alignItems="center"
           mb={2}
+          sx={{
+            '@media (max-width: 800px)': {
+              flexDirection: 'column',
+              alignItems: 'center',
+              rowGap:'10px'
+            },
+          }}
         >
           <Box display="flex" alignItems="center" sx={{ columnGap: "5px" }}>
             <Typography variant="body1">Show</Typography>
@@ -529,11 +564,29 @@ const Picklistvalue = () => {
                             key={column}
                             sx={{ color: "#6c757d", fontSize: ".8rem" }}
                           >
-                            {row[column]}
+                            {/* {row[column]} */}
+                            {column === "Id" && (
+                              row.id
+                              )}
+                            {column === "Pick List Value" && (
+                              row.pick_list_value
+                              )}
+                            {column === "Pick List Value Type" && (
+                              row.pick_list_types.pick_list_type
+                              )}
+                                 {column === "InActive?" && (
+                              row.in_active === 0 ? 'No' : 'Yes'
+                              )}
+                                 {column === "Created By" && (
+                              row.created_by_user.name
+                              )}
+                               {column === "Created On" && (
+                              row.created_at
+                              )}
                             {column === "Edit" && (
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleEdit(row.Id)}
+                                  onClick={() => handleEdit(row.id)}
                                   sx={{ ml: 1 }}
                                 >
                                   <EditIcon />
@@ -542,7 +595,7 @@ const Picklistvalue = () => {
                             {column === "Delete" && (
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleDelete(row.Id)}
+                                    onClick={() => handleDelete(row.id)}
                                     sx={{ ml: 1 }}
                                   >
                                     <DeleteIcon />
