@@ -3,13 +3,15 @@ import Container from "@mui/material/Container";
 import Copyright from "../footer/Copyright";
 import CustomCheckbox from "../../utils/checkBox";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import Box from "@mui/material/Box";
 import { loginApi } from "../../apis/api";
+import { loadUser } from "../../actions/generalActions";
 
 function Login({ isPasswordResetPage }) {
-  const url = import.meta.env.VITE_BACKEND_APP_URI
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   let loginInitialData = {
     email: "",
@@ -110,6 +112,7 @@ function Login({ isPasswordResetPage }) {
           // Handle successful login response here
          
           if(response.success){
+            dispatch(loadUser())
             // redirect to dashboard
             navigate("/home");
           }else{

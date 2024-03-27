@@ -1,47 +1,71 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import CreateItem from './CreateItem';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import CreateItem from "./CreateItem";
+import { getsingleItem, updateItems } from "../../apis/masters/items";
 
 function EditItem() {
   const { id } = useParams();
+  const [data, setData] = useState(null); // State to hold the fetched data
 
-  // Fetch the item data based on the ID
-  const fetchItemData = () => {
-    try {
-        console.log(id)
-        // make API call to fetch databy id 
-        const data = {
-            "itemCode": "Test code",
-            "itemTitle": "Test Title",
-            "itemGroup": "Group1",
-            "itemUoM": "Test",
-            "isActive": true,
-            "mrp": "521",
-            "imagePreview": "blob:http://localhost:5173/39c6c8ba-3d74-458a-b20e-6f8b77dd8836",
-            "image": {}
+  useEffect(() => {
+    // Function to fetch data
+    const fetchLatestData = async () => {
+      try {
+        const response = await getsingleItem(id);
+        if (response.success) {
+          console.log(response.data);
+          const newData = {
+            itemCode: response.data.item_code,
+            itemTitle: response.data.item_title,
+            itemGroup: response.data.item_group_id,
+            itemUoM: response.data.uom_pl,
+            isActive: response.data.in_active,
+            mrp: response.data.mrp,
+            image: response.data.item_image_path,
+            closing_stock: response.data.closing_stock,
+            company_id: response.data.company_id,
+            imagePreview: response.data.item_image_path,
+          };
+          console.log(newData);
+          setData(newData); // Set the fetched data to state
+        } else {
+          console.error("Failed to fetch items:", response.error);
         }
-        return data
- 
-    } catch (error) {
-      console.error('Error fetching item data:', error);
-      return null;
-    }
-  };
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
 
-  const handleSubmit = async (formData) => {
+    fetchLatestData(); // Call the function to fetch data
+  }, [id]); // Ensure useEffect runs when id changes
+
+  const handleSubmit = async (itemFormData) => {
     try {
       // Make API request to update item data
-    //  make api call to update data based on id
       // Handle success
-      console.log('Item updated successfully');
+      const formData = new FormData();
+      console.log(itemFormData);
+      formData.append("item_code", itemFormData.itemCode);
+      formData.append("item_title", itemFormData.itemTitle);
+      formData.append("item_group_id", itemFormData.itemGroup.id);
+      formData.append("item_image", itemFormData.image);
+      formData.append("uom_pl", itemFormData.itemUoM.id);
+      formData.append("mrp", itemFormData.mrp);
+      formData.append("closing_stock", itemFormData.closing_stock);
+      formData.append("in_active", itemFormData.isActive);
+      formData.append("company_id", itemFormData.company_id);
+      console.log(formData);
+      const response = updateItems({ data: formData, id: id });
+      console.log("Item updated successfully");
     } catch (error) {
-      console.error('Error updating item:', error);
+      console.error("Error updating item:", error);
     }
   };
 
   return (
     <div>
-      <CreateItem initialValues={fetchItemData()} onSubmit={handleSubmit} />
+      {data && <CreateItem initialValues={data} onSubmit={handleSubmit} />}{" "}
+      {/* Render CreateItem only when data is available */}
     </div>
   );
 }

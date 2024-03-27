@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef  } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -10,12 +10,17 @@ import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import CustomPopup from "../../utils/customPopup";
-import Swal from 'sweetalert2'
-import { IconButton, InputAdornment } from '@mui/material';
-import { deletePickListValue, getPickListValues } from "../../apis/masters/pickListValue";
+import Swal from "sweetalert2";
+import { IconButton, InputAdornment } from "@mui/material";
+import {
+  createPickListValue,
+  deletePickListValue,
+  getPickListValues,
+  updatePickListValue,
+} from "../../apis/masters/pickListValue";
 
 import {
   Box,
@@ -41,11 +46,23 @@ const Picklistvalue = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [pickListValueData, setPickListValueData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [pickListValue, setPickListValue] = useState({ name: "", isactive: false });
-  const [pickListValueType, setPickListValueType] = useState(null);
+  const [pickListValue, setPickListValue] = useState({
+    name: "",
+    isactive: 0,
+    company_id: 1,
+  });
+  const [pickListValueType, setPickListValueType] = useState({
+    label: "",
+    value: "",
+  });
   const [error, setError] = useState({ name: "", type: "" });
+  const [isEditopen, setisEditopen] = useState({ edit: false, id: "" });
   const [anchorEl, setAnchorEl] = useState(null);
-  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
+  const [displayPopup, setDisplayPopup] = useState({
+    show: false,
+    type: "",
+    mgs: "",
+  });
   const [visibleColumns, setVisibleColumns] = useState({
     Id: true,
     "Pick List Value": true,
@@ -58,21 +75,21 @@ const Picklistvalue = () => {
   });
 
   // fetch latestdata
-  const fetchLatestData = ()=>{
+  const fetchLatestData = () => {
     getPickListValues()
-    .then((response) => {
-      console.log(response)
-      if (response.success) {
-        setPickListValueData(response.data);
-      } else {
-        console.error("Failed to fetch pick list types:", response.error);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching pick list types:", error);
-    });
-  }
-  
+      .then((response) => {
+        console.log(response);
+        if (response.success) {
+          setPickListValueData(response.data);
+        } else {
+          console.error("Failed to fetch pick list types:", response.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching pick list types:", error);
+      });
+  };
+
   useEffect(() => {
     fetchLatestData();
   }, []);
@@ -87,18 +104,24 @@ const Picklistvalue = () => {
   };
 
   const handleCopyVisibleData = () => {
-    const visibleData = pickListValueData
+    const formattedDataArray = pickListValueData
       .map((item) => {
-        return Object.keys(item)
-          .filter((key) => visibleColumns[key])
-          .map((key) => item[key])
-          .join(", ");
+        return `${item.id}, ${item.pick_list_value}, ${
+          item.pick_list_types.pick_list_type
+        }, ${item.in_active === 0 ? "No" : "Yes"}, ${
+          item.created_by_user.name
+        }, ${item.created_at}`;
       })
       .join("\n");
-    navigator.clipboard.writeText(visibleData);
-    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+
+    navigator.clipboard.writeText(formattedDataArray);
+    setDisplayPopup({
+      show: true,
+      type: "success",
+      mgs: "Data Copied to Clipboard",
+    });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -108,15 +131,24 @@ const Picklistvalue = () => {
   };
 
   const handleExportCSV = () => {
-    // Logic to export table data to CSV
-    const csv = generateCsv(csvConfig)(pickListValueData);
+    console.log(pickListValueData);
+    const transformedData = pickListValueData.map((item) => ({
+      Id: item.id,
+      "Pick List Value": item.pick_list_value,
+      "Pick List Value Type": item.pick_list_types.pick_list_type,
+      "InActive?": item.in_active === 0 ? "false" : "true",
+      "Created By": item.created_by_user.name,
+      "Created On": item.created_at,
+    }));
+
+    console.log(transformedData);
+    const csv = generateCsv(csvConfig)(transformedData);
     download(csvConfig)(csv);
-    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setDisplayPopup({ show: true, type: "success", mgs: "CSV file Exported" });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
-
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -129,7 +161,7 @@ const Picklistvalue = () => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
         deletePickListValue(id)
@@ -137,18 +169,20 @@ const Picklistvalue = () => {
             if (response.success) {
               Swal.fire({
                 title: "Deleted!",
-                text: response.message || "Your Pick List value has been created.",
-                icon: "success"
+                text:
+                  response.message || "Your Pick List value has been created.",
+                icon: "success",
               });
               // fetch updated data
               fetchLatestData();
-
             } else {
-              console.log(response.error.data.message)
+              console.log(response.error.data.message);
               Swal.fire({
                 title: "Error!",
-                text: response.error.data.message || "Failed to delete the Pick List value.",
-                icon: "error"
+                text:
+                  response.error.data.message ||
+                  "Failed to delete the Pick List value.",
+                icon: "error",
               });
             }
           })
@@ -156,7 +190,7 @@ const Picklistvalue = () => {
             Swal.fire({
               title: "Error!",
               text: "Failed to delete the Pick List value.",
-              icon: "error"
+              icon: "error",
             });
             console.error("Error deleting Pick List value:", error);
           });
@@ -164,19 +198,23 @@ const Picklistvalue = () => {
     });
   };
   const handleEdit = (id) => {
-    console.log(id);
-    let filteredData = pickListValueData.filter(item => item.id === id);
-    filteredData = filteredData[0]
-    console.log(filteredData)
-
-    setPickListValue({name : filteredData.pick_list_value, isactive : filteredData.in_active === '1' ? true : false   });
-    setPickListValueType( { label:`${filteredData.pick_list_types.pick_list_type}`, value: `${filteredData.pick_list_types.id}` })
+    setisEditopen({ edit: true, id: id });
+    let filteredData = pickListValueData.filter((item) => item.id === id);
+    filteredData = filteredData[0];
+    setPickListValue({
+      name: filteredData.pick_list_value,
+      isactive: filteredData.in_active,
+      company_id: 1,
+    });
+    setPickListValueType({
+      label: `${filteredData.pick_list_types.pick_list_type}`,
+      value: `${filteredData.pick_list_types.id}`,
+    });
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   };
-
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -184,8 +222,51 @@ const Picklistvalue = () => {
       direction = "desc";
     }
     setSortConfig({ key, direction });
+
+    // Sort logic based on column key
+    if (key === "Id") {
+      // Sort numerical values for Id column
+      setPickListValueData((prevData) => {
+        return [...prevData].sort((a, b) => {
+          if (direction === "asc") {
+            return a.id - b.id;
+          } else {
+            return b.id - a.id;
+          }
+        });
+      });
+    } else if (key === "Created On") {
+      // Sort by date for Created On column
+      setPickListValueData((prevData) => {
+        return [...prevData].sort((a, b) => {
+          if (direction === "asc") {
+            return new Date(a.created_at) - new Date(b.created_at);
+          } else {
+            return new Date(b.created_at) - new Date(a.created_at);
+          }
+        });
+      });
+    } else {
+      // Sort alphabetically for other columns
+      setPickListValueData((prevData) => {
+        return [...prevData].sort((a, b) => {
+          const valueA =
+            key === "Pick List Value Type"
+              ? a.pick_list_types.pick_list_type
+              : a.created_by_user.name;
+          const valueB =
+            key === "Pick List Value Type"
+              ? b.pick_list_types.pick_list_type
+              : b.created_by_user.name;
+          if (direction === "asc") {
+            return valueA.localeCompare(valueB);
+          } else {
+            return valueB.localeCompare(valueA);
+          }
+        });
+      });
+    }
   };
-  
 
   const handleToggleColumn = (column) => {
     setVisibleColumns({
@@ -202,16 +283,19 @@ const Picklistvalue = () => {
     setAnchorEl(null);
   };
 
-  const sortedData = pickListValueData.sort((a, b) => {
-    if(sortConfig.direction === ""){
-      return
+  const sortedData = useMemo(() => {
+    if (sortConfig.direction === "") {
+      return pickListValueData;
     }
-    if (sortConfig.direction === "asc") {
-      return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
-    } else {
-      return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
-    }
-  });
+
+    return [...pickListValueData].sort((a, b) => {
+      if (sortConfig.direction === "asc") {
+        return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
+      } else {
+        return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
+      }
+    });
+  }, [pickListValueData, sortConfig]);
 
   const filteredData = sortedData.filter((item) => {
     return Object.values(item).some((value) =>
@@ -223,15 +307,11 @@ const Picklistvalue = () => {
     (column) => visibleColumns[column]
   );
   const pickListValueTypes = [
-    { label: "Type 0", value: "Type 0" },
-    { label: "Type 1", value: "Type 1" },
-    { label: "Type 2", value: "Type 2" },
-    { label: "Type 3", value: "Type 3" },
-    { label: "Type 4", value: "Type 4" },
-    { label: "Type 5", value: "Type 5" },
+    { label: "Computer Accessories", value: "3" },
+    { label: "Mobile Accessories", value: "4" },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const removeError = () => {
       setTimeout(() => {
@@ -255,13 +335,44 @@ const Picklistvalue = () => {
       removeError();
       return;
     }
-    Swal.fire({
-      position: "top-end",
-      icon: "success",
-      title: "Your work has been saved",
-      showConfirmButton: false,
-      timer: 1500
-    });
+    // make an api call to save data to database
+    try {
+      const formData = new FormData();
+      formData.append("pick_list_type_id", pickListValueType.value);
+      formData.append("pick_list_value", pickListValue.name);
+      formData.append("in_active", pickListValue.isactive);
+      formData.append("company_id", pickListValue.company_id);
+      let data;
+      console.log(isEditopen.edit);
+      if (isEditopen.edit) {
+        data = await updatePickListValue({ data: formData, id: isEditopen.id });
+      } else {
+        data = await createPickListValue(formData);
+      }
+      console.log(data);
+      if (!data.success) {
+        Swal.fire({
+          position: "top-end",
+          icon: "error",
+          title: `${data.error.data.data.pick_list_value[0]}`,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
+      Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: `${data.message}`,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setPickListValueType({ label: "", value: "" });
+      setPickListValue({ name: "", isactive: 0, company_id: 1 });
+      fetchLatestData();
+    } catch (error) {
+      // handle error here
+    }
   };
 
   return (
@@ -289,7 +400,7 @@ const Picklistvalue = () => {
               size="small"
               error={!!error.name}
               helperText={error.name}
-              sx={{ margin: "0 12px", color:"#6c757d" }}
+              sx={{ margin: "0 12px", color: "#6c757d" }}
             />
             <Autocomplete
               options={pickListValueTypes}
@@ -299,9 +410,10 @@ const Picklistvalue = () => {
               onChange={(event, value) => {
                 setError((prevErrors) => ({ ...prevErrors, name: "" }));
                 setPickListValueType(value);
+                console.log(value);
               }}
               isOptionEqualToValue={(option, value) =>
-                option.value === value?.value
+                option.value != value?.value
               }
               renderInput={(params) => (
                 <TextField
@@ -309,8 +421,8 @@ const Picklistvalue = () => {
                   label="Pick List Value Type"
                   variant="outlined"
                   size="small"
-                  error={!!error.type} 
-                  helperText={error.type} 
+                  error={!!error.type}
+                  helperText={error.type}
                 />
               )}
               size="small"
@@ -329,7 +441,10 @@ const Picklistvalue = () => {
               control={<Checkbox checked={!!pickListValue.isactive} />}
               label="IsActive"
               onChange={(e) =>
-                setPickListValue({ ...pickListValue, isactive: e.target.checked })
+                setPickListValue({
+                  ...pickListValue,
+                  isactive: e.target.checked ? 1 : 0,
+                })
               }
               sx={{
                 fontSize: ".5rem",
@@ -364,10 +479,10 @@ const Picklistvalue = () => {
           alignItems="center"
           mb={2}
           sx={{
-            '@media (max-width: 800px)': {
-              flexDirection: 'column',
-              alignItems: 'center',
-              rowGap:'10px'
+            "@media (max-width: 800px)": {
+              flexDirection: "column",
+              alignItems: "center",
+              rowGap: "10px",
             },
           }}
         >
@@ -558,49 +673,41 @@ const Picklistvalue = () => {
                   filteredData
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
-                      <TableRow key={row.Id}>
+                      <TableRow key={row.id}>
                         {visibleColumnsArray.map((column) => (
                           <TableCell
                             key={column}
                             sx={{ color: "#6c757d", fontSize: ".8rem" }}
                           >
                             {/* {row[column]} */}
-                            {column === "Id" && (
-                              row.id
-                              )}
-                            {column === "Pick List Value" && (
-                              row.pick_list_value
-                              )}
-                            {column === "Pick List Value Type" && (
-                              row.pick_list_types.pick_list_type
-                              )}
-                                 {column === "InActive?" && (
-                              row.in_active === 0 ? 'No' : 'Yes'
-                              )}
-                                 {column === "Created By" && (
-                              row.created_by_user.name
-                              )}
-                               {column === "Created On" && (
-                              row.created_at
-                              )}
+                            {column === "Id" && row.id}
+                            {column === "Pick List Value" &&
+                              row.pick_list_value}
+                            {column === "Pick List Value Type" &&
+                              row.pick_list_types.pick_list_type}
+                            {column === "InActive?" &&
+                              (row.in_active === 0 ? "No" : "Yes")}
+                            {column === "Created By" &&
+                              row.created_by_user.name}
+                            {column === "Created On" && row.created_at}
                             {column === "Edit" && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(row.id)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            )}
                             {column === "Delete" && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleDelete(row.id)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -632,7 +739,9 @@ const Picklistvalue = () => {
           </Box>
         </Box>
       </Box>
-      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
+      {displayPopup.show && (
+        <CustomPopup type={displayPopup.type} message={displayPopup.mgs} />
+      )}
     </Container>
   );
 };

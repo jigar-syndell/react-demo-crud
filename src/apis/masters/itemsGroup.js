@@ -11,14 +11,13 @@ const jsonconfig = {
 const formDataconfig = {
   headers: {
     "Content-Type": "multipart/form-data",
-    Authorization: `Bearer ${token}`,
   },
 };
 
 // Login API
-export const getPickListValues = async () => {
+export const getItemsGroups = async () => {
   try {
-    const { data } = await axios.get(`${url}/pickListValue`, jsonconfig);
+    const { data } = await axios.get(`${url}/itemGroup`, jsonconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };
@@ -26,13 +25,9 @@ export const getPickListValues = async () => {
 };
 
 // create pick list type
-export const createPickListValue = async (payload) => {
+export const createItemsGroup = async (payload) => {
   try {
-    const { data } = await axios.post(
-      `${url}/pickListValue`,
-      payload,
-      jsonconfig
-    );
+    const { data } = await axios.post(`${url}/itemGroup`, payload, jsonconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };
@@ -40,10 +35,10 @@ export const createPickListValue = async (payload) => {
 };
 
 // update pick list type
-export const updatePickListValue = async (payload) => {
+export const updateItemsGroup = async (payload) => {
   try {
     const { data } = await axios.put(
-      `${url}/pickListValue/${payload.id}`,
+      `${url}/itemGroup/${payload.id}`,
       payload.data,
       jsonconfig
     );
@@ -54,12 +49,9 @@ export const updatePickListValue = async (payload) => {
 };
 
 // delete pick list type
-export const deletePickListValue = async (id) => {
+export const deleteItemsGroup = async (id) => {
   try {
-    const { data } = await axios.delete(
-      `${url}/pickListValue/${id}`,
-      jsonconfig
-    );
+    const { data } = await axios.delete(`${url}/itemGroup/${id}`, jsonconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };

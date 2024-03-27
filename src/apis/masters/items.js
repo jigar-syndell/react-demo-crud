@@ -16,9 +16,19 @@ const formDataconfig = {
 };
 
 // Login API
-export const getPickListValues = async () => {
+export const getItems = async () => {
   try {
-    const { data } = await axios.get(`${url}/pickListValue`, jsonconfig);
+    const { data } = await axios.get(`${url}/item`, jsonconfig);
+    return data;
+  } catch (error) {
+    return { success: false, error: error.response };
+  }
+};
+
+// Login API
+export const getsingleItem = async (id) => {
+  try {
+    const { data } = await axios.get(`${url}/item/${id}`, jsonconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };
@@ -26,13 +36,9 @@ export const getPickListValues = async () => {
 };
 
 // create pick list type
-export const createPickListValue = async (payload) => {
+export const createItems = async (payload) => {
   try {
-    const { data } = await axios.post(
-      `${url}/pickListValue`,
-      payload,
-      jsonconfig
-    );
+    const { data } = await axios.post(`${url}/item`, payload, formDataconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };
@@ -40,12 +46,12 @@ export const createPickListValue = async (payload) => {
 };
 
 // update pick list type
-export const updatePickListValue = async (payload) => {
+export const updateItems = async (payload) => {
   try {
     const { data } = await axios.put(
-      `${url}/pickListValue/${payload.id}`,
+      `${url}/item/${payload.id}`,
       payload.data,
-      jsonconfig
+      formDataconfig
     );
     return data;
   } catch (error) {
@@ -54,12 +60,9 @@ export const updatePickListValue = async (payload) => {
 };
 
 // delete pick list type
-export const deletePickListValue = async (id) => {
+export const deleteItems = async (id) => {
   try {
-    const { data } = await axios.delete(
-      `${url}/pickListValue/${id}`,
-      jsonconfig
-    );
+    const { data } = await axios.delete(`${url}/item/${id}`, jsonconfig);
     return data;
   } catch (error) {
     return { success: false, error: error.response };

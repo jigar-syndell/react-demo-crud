@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -9,10 +9,10 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import Swal from 'sweetalert2'
-import { IconButton, InputAdornment } from '@mui/material';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import Swal from "sweetalert2";
+import { IconButton, InputAdornment } from "@mui/material";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import {
   Box,
@@ -29,33 +29,19 @@ import {
 import SouthIcon from "@mui/icons-material/South";
 import NorthIcon from "@mui/icons-material/North";
 import CustomPopup from "../../utils/customPopup";
+import { deleteItems, getItems } from "../../apis/masters/items";
 const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "ItemsMaster" });
-
-const generateMockData = () => {
-  const mockData = [];
-  for (let i = 1; i <= 100; i++) {
-    mockData.push({
-      Id: i,
-      Name: `Item ${i}`,
-      Image: `https://picsum.photos/seed/picsum/200/300`,
-      group: `Group ${(i % 5) + 1}`,
-      UoM: i % 2 === 0 ? "pcs" : "kg",
-      MRP: Math.floor(Math.random() * 500) + 50,
-      inActive: i % 3 === 0 ? "True" : "False",
-      createdBy: `User ${(i % 3) + 1}`,
-      createdOn: "2022-01-01", // Assuming all items are created on the same date
-    });
-  }
-  return mockData;
-};
-
-const mockData = generateMockData();
 
 const Items = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
+  const [itemsData, setItemsData] = useState([]);
+  const [displayPopup, setDisplayPopup] = useState({
+    show: false,
+    type: "",
+    mgs: "",
+  });
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [anchorEl, setAnchorEl] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState({
@@ -72,6 +58,26 @@ const Items = () => {
     Edit: true,
   });
   const navigate = useNavigate();
+
+  // fetch latestdata
+  const fetchLatestData = () => {
+    getItems()
+      .then((response) => {
+        if (response.success) {
+          console.log(response.data);
+          setItemsData(response.data);
+        } else {
+          console.error("Failed to fetch items:", response.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching items:", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchLatestData();
+  }, []);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -94,21 +100,45 @@ const Items = () => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your file has been deleted.",
-          icon: "success"
-        });
+        deleteItems(id)
+          .then((response) => {
+            if (response.success) {
+              Swal.fire({
+                title: "Deleted!",
+                text:
+                  response.message || "Your Pick List value has been created.",
+                icon: "success",
+              });
+              // fetch updated data
+              fetchLatestData();
+            } else {
+              console.log(response.error.data.message);
+              Swal.fire({
+                title: "Error!",
+                text:
+                  response.error.data.message ||
+                  "Failed to delete the Pick List value.",
+                icon: "error",
+              });
+            }
+          })
+          .catch((error) => {
+            Swal.fire({
+              title: "Error!",
+              text: "Failed to delete the Pick List value.",
+              icon: "error",
+            });
+            console.error("Error deleting Pick List value:", error);
+          });
       }
     });
   };
   const handleEdit = (id) => {
-    navigate(`/item/edit/${id}`)
+    navigate(`/item/edit/${id}`);
   };
-
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -134,12 +164,24 @@ const Items = () => {
   };
 
   const handleExportCSV = () => {
-    // Logic to export table data to CSV
-    const csv = generateCsv(csvConfig)(mockData);
+    console.log(itemsData);
+    const transformedData = itemsData.map((item) => ({
+      Id: item.id,
+      Name: item.item_title,
+      Image: item.item_image_path,
+      Group: item.item_groups.item_group_name,
+      UoM: item.pick_list_values.pick_list_value,
+      MRP: item.mrp,
+      InActive: item.in_active === 0 ? "false" : "true",
+      CreatedBy: item.created_by_user.name,
+      CreatedOn: item.created_at,
+    }));
+
+    const csv = generateCsv(csvConfig)(transformedData);
     download(csvConfig)(csv);
-    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setDisplayPopup({ show: true, type: "success", mgs: "CSV file Exported" });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -149,24 +191,30 @@ const Items = () => {
   };
 
   const handleCopyVisibleData = () => {
-    const visibleData = mockData
+    const formattedDataArray = itemsData
       .map((item) => {
-        return Object.keys(item)
-          .filter((key) => visibleColumns[key])
-          .map((key) => item[key])
-          .join(", ");
+        return `${item.id}, ${item.item_title}, ${item.item_image_path}, ${
+          item.item_groups.item_group_name
+        }, ${item.mrp}, ${item.in_active === 0 ? "No" : "Yes"}, ${
+          item.created_by_user.name
+        }, ${item.created_at}`;
       })
       .join("\n");
-    navigator.clipboard.writeText(visibleData);
-    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+
+    navigator.clipboard.writeText(formattedDataArray);
+    setDisplayPopup({
+      show: true,
+      type: "success",
+      mgs: "Data Copied to Clipboard",
+    });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
-  const sortedData = mockData.sort((a, b) => {
-    if(sortConfig.direction === ""){
-      return
+  const sortedData = itemsData.sort((a, b) => {
+    if (sortConfig.direction === "") {
+      return;
     }
     if (sortConfig.direction === "asc") {
       return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
@@ -214,10 +262,10 @@ const Items = () => {
         alignItems="center"
         mb={2}
         sx={{
-          '@media (max-width: 800px)': {
-            flexDirection: 'column',
-            alignItems: 'center',
-            rowGap:'10px'
+          "@media (max-width: 800px)": {
+            flexDirection: "column",
+            alignItems: "center",
+            rowGap: "10px",
           },
         }}
       >
@@ -368,7 +416,7 @@ const Items = () => {
       </Box>
       <Box>
         <TableContainer component={Paper} sx={{ border: "1px solid #dee2e6" }}>
-          <Table sx={{overflowX : 'auto'}}>
+          <Table sx={{ overflowX: "auto" }}>
             <TableHead
               sx={{ backgroundColor: "white", border: "1px solid #dee2e6" }}
             >
@@ -405,34 +453,42 @@ const Items = () => {
                 filteredData
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row) => (
-                    <TableRow key={row.Id}>
+                    <TableRow key={row.id}>
                       {visibleColumnsArray.map((column) => (
                         <TableCell
                           key={column}
                           sx={{ color: "#6c757d", fontSize: ".8rem" }}
                         >
-                          {column === "Image" ? (
+                          {column === "Image" && (
                             <img
-                              src={row[column]}
-                              alt={row.Name}
+                              src={row.item_image_path}
+                              alt={row.item_image}
                               style={{ width: 50, height: 50 }}
                             />
-                          ) : (
-                            row[column]
                           )}
+                          {column === "Id" && row.id}
+                          {column === "Name" && row.item_title}
+                          {column === "group" &&
+                            row.item_groups.item_group_name}
+                          {column === "UoM" && row.item_groups.item_group_name}
+                          {column === "MRP" && row.mrp}
+                          {column === "inActive" &&
+                            (row.in_active === 0 ? "No" : "Yes")}
+                          {column === "createdBy" && row.created_by_user.name}
+                          {column === "createdOn" && row.created_at}
                           {column === "Edit" && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(row.Id)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              )}
-                         {column === "Delete" && (
                             <IconButton
                               size="small"
-                              onClick={() => handleDelete(row.Id)}
+                              onClick={() => handleEdit(row.id)}
+                              sx={{ ml: 1 }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )}
+                          {column === "Delete" && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(row.id)}
                               sx={{ ml: 1 }}
                             >
                               <DeleteIcon />
@@ -464,7 +520,9 @@ const Items = () => {
           />
         </Box>
       </Box>
-      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
+      {displayPopup.show && (
+        <CustomPopup type={displayPopup.type} message={displayPopup.mgs} />
+      )}
     </Container>
   );
 };

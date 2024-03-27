@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -10,10 +10,10 @@ import Paper from "@mui/material/Paper";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import Swal from 'sweetalert2'
-import { IconButton, InputAdornment } from '@mui/material';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import Swal from "sweetalert2";
+import { IconButton, InputAdornment } from "@mui/material";
 import CustomPopup from "../../utils/customPopup";
 import {
   Box,
@@ -30,37 +30,38 @@ import {
   Stack,
   InputLabel,
 } from "@mui/material";
+import {
+  createItemsGroup,
+  deleteItemsGroup,
+  getItemsGroups,
+  updateItemsGroup,
+} from "../../apis/masters/itemsGroup";
 const csvConfig = mkConfig({
   useKeysAsHeaders: true,
   filename: "ItemsGroupMaster",
 });
 
-const generateMockData = () => {
-  const mockData = [];
-  for (let i = 1; i <= 100; i++) {
-    mockData.push({
-      Id: i,
-      "Item Group Name": `Item Group ${i}`,
-      "Group Type": `Type ${i % 3}`,
-      "InActive?": i % 2 === 0 ? "Yes" : "No",
-      "Created By": `User ${(i % 3) + 1}`,
-      "Created On": "2022-01-01",
-    });
-  }
-  return mockData;
-};
-const mockData = generateMockData();
-
 const ItemGroup = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [itemGroupData, setItemGroupData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [itemGroup, setItemGroup] = useState({ name: "", isactive: false });
-  const [itemGroupType, setItemGroupType] = useState(null);
+  const [itemGroup, setItemGroup] = useState({
+    name: "",
+    isactive: 0,
+    company_id: 1,
+  });
+  const [itemGroupType, setItemGroupType] = useState({ label: "", value: "" });
   const [error, setError] = useState({ name: "", type: "" });
+  const [isEditopen, setisEditopen] = useState({ edit: false, id: "" });
+
   const [anchorEl, setAnchorEl] = useState(null);
-  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
+  const [displayPopup, setDisplayPopup] = useState({
+    show: false,
+    type: "",
+    mgs: "",
+  });
   const [visibleColumns, setVisibleColumns] = useState({
     Id: true,
     "Item Group Name": true,
@@ -72,6 +73,26 @@ const ItemGroup = () => {
     Edit: true,
   });
 
+  // fetch latestdata
+  const fetchLatestData = () => {
+    getItemsGroups()
+      .then((response) => {
+        if (response.success) {
+          console.log(response.data);
+          setItemGroupData(response.data);
+        } else {
+          console.error("Failed to fetch item group:", response.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching item group:", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchLatestData();
+  }, []);
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -82,18 +103,24 @@ const ItemGroup = () => {
   };
 
   const handleCopyVisibleData = () => {
-    const visibleData = mockData
+    const formattedDataArray = itemGroupData
       .map((item) => {
-        return Object.keys(item)
-          .filter((key) => visibleColumns[key])
-          .map((key) => item[key])
-          .join(", ");
+        return `${item.id}, ${item.item_group_name},${
+          item.pick_list_values.pick_list_value
+        }, ${item.in_active === 0 ? "No" : "Yes"}, ${
+          item.created_by_user.name
+        }, ${item.created_at}`;
       })
       .join("\n");
-    navigator.clipboard.writeText(visibleData);
-    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+
+    navigator.clipboard.writeText(formattedDataArray);
+    setDisplayPopup({
+      show: true,
+      type: "success",
+      mgs: "Data Copied to Clipboard",
+    });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -103,12 +130,20 @@ const ItemGroup = () => {
   };
 
   const handleExportCSV = () => {
-    // Logic to export table data to CSV
-    const csv = generateCsv(csvConfig)(mockData);
+    const transformedData = itemGroupData.map((item) => ({
+      Id: item.id,
+      "Item Group Name": item.item_group_name,
+      "Group Type": item.pick_list_values.pick_list_value,
+      "InActive?": item.in_active === 0 ? "false" : "true",
+      "Created By": item.created_by_user.name,
+      "Created On": item.created_at,
+    }));
+
+    const csv = generateCsv(csvConfig)(transformedData);
     download(csvConfig)(csv);
-    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setDisplayPopup({ show: true, type: "success", mgs: "CSV file Exported" });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -124,38 +159,117 @@ const ItemGroup = () => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your file has been deleted.",
-          icon: "success"
-        });
+        deleteItemsGroup(id)
+          .then((response) => {
+            if (response.success) {
+              Swal.fire({
+                title: "Deleted!",
+                text: response.message || "Your item group has been created.",
+                icon: "success",
+              });
+              // fetch updated data
+              fetchLatestData();
+            } else {
+              console.log(response.error.data.message);
+              Swal.fire({
+                title: "Error!",
+                text:
+                  response.error.data.message ||
+                  "Failed to delete the item group.",
+                icon: "error",
+              });
+            }
+          })
+          .catch((error) => {
+            Swal.fire({
+              title: "Error!",
+              text: "Failed to delete the item group.",
+              icon: "error",
+            });
+            console.error("Error deleting item group:", error);
+          });
       }
     });
   };
+
   const handleEdit = (id) => {
-    console.log(id);
-    let filteredData = mockData.filter(item => item.Id === id);
-    filteredData = filteredData[0]
-    console.log(filteredData['Group Type'])
-    setItemGroup({name : filteredData['Item Group Name'] , isactive : filteredData['InActive?'] === 'Yes' ? true : false   });
-    setItemGroupType( { label:`${filteredData['Group Type']}`, value: `${filteredData['Group Type']}` })
+    setisEditopen({ edit: true, id: id });
+    let filteredData = itemGroupData.filter((item) => item.id === id);
+    filteredData = filteredData[0];
+    console.log(filteredData);
+    setItemGroup({
+      name: filteredData.item_group_name,
+      isactive: filteredData.in_active,
+      company_id: 1,
+    });
+    setItemGroupType({
+      label: `${filteredData.pick_list_values.pick_list_value}`,
+      value: `${filteredData.pick_list_values.id}`,
+    });
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   };
 
-  const handleSort = (key) => {
+  const handleSort = (column) => {
     let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
       direction = "desc";
     }
-    setSortConfig({ key, direction });
+    setSortConfig({ key: column, direction });
+
+    // Call the sorting function with the column name
+    sortData(column, direction);
   };
-  
+
+  const sortData = (column, direction) => {
+    let sortedData = [...itemGroupData];
+    if (column === "Id") {
+      sortedData.sort((a, b) =>
+        direction === "asc" ? a.id - b.id : b.id - a.id
+      );
+    } else if (column === "Item Group Name") {
+      sortedData.sort((a, b) =>
+        direction === "asc"
+          ? a.item_group_name.localeCompare(b.item_group_name)
+          : b.item_group_name.localeCompare(a.item_group_name)
+      );
+    } else if (column === "Group Type") {
+      sortedData.sort((a, b) =>
+        direction === "asc"
+          ? a.pick_list_values.pick_list_value.localeCompare(
+              b.pick_list_values.pick_list_value
+            )
+          : b.pick_list_values.pick_list_value.localeCompare(
+              a.pick_list_values.pick_list_value
+            )
+      );
+    } else if (column === "InActive?") {
+      sortedData.sort((a, b) =>
+        direction === "asc"
+          ? a.in_active - b.in_active
+          : b.in_active - a.in_active
+      );
+    } else if (column === "Created By") {
+      sortedData.sort((a, b) =>
+        direction === "asc"
+          ? a.created_by_user.name.localeCompare(b.created_by_user.name)
+          : b.created_by_user.name.localeCompare(a.created_by_user.name)
+      );
+    } else if (column === "Created On") {
+      sortedData.sort((a, b) =>
+        direction === "asc"
+          ? new Date(a.created_at) - new Date(b.created_at)
+          : new Date(b.created_at) - new Date(a.created_at)
+      );
+    }
+
+    setItemGroupData(sortedData);
+  };
 
   const handleToggleColumn = (column) => {
     setVisibleColumns({
@@ -172,16 +286,19 @@ const ItemGroup = () => {
     setAnchorEl(null);
   };
 
-  const sortedData = mockData.sort((a, b) => {
-    if(sortConfig.direction === ""){
-      return
+  const sortedData = useMemo(() => {
+    if (sortConfig.direction === "") {
+      return itemGroupData;
     }
-    if (sortConfig.direction === "asc") {
-      return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
-    } else {
-      return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
-    }
-  });
+
+    return [...itemGroupData].sort((a, b) => {
+      if (sortConfig.direction === "asc") {
+        return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
+      } else {
+        return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1;
+      }
+    });
+  }, [itemGroupData, sortConfig]);
 
   const filteredData = sortedData.filter((item) => {
     return Object.values(item).some((value) =>
@@ -193,15 +310,12 @@ const ItemGroup = () => {
     (column) => visibleColumns[column]
   );
   const itemGroupTypes = [
-    { label: "Type 0", value: "Type 0" },
-    { label: "Type 1", value: "Type 1" },
-    { label: "Type 2", value: "Type 2" },
-    { label: "Type 3", value: "Type 3" },
-    { label: "Type 4", value: "Type 4" },
-    { label: "Type 5", value: "Type 5" },
+    { label: "Monitor", value: "1" },
+    { label: "Printers", value: "2" },
+    { label: "Screen Guards", value: "3" },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const removeError = () => {
       setTimeout(() => {
@@ -224,14 +338,46 @@ const ItemGroup = () => {
       }));
       removeError();
       return;
-  }
-  Swal.fire({
-    position: "top-end",
-    icon: "success",
-    title: "Your work has been saved",
-    showConfirmButton: false,
-    timer: 1500
-  });
+    }
+    // make an api call to save data to database
+    try {
+      console.log(itemGroup);
+      const formData = new FormData();
+      formData.append("pick_list_value_id", itemGroupType.value);
+      formData.append("item_group_name", itemGroup.name);
+      formData.append("in_active", itemGroup.isactive);
+      formData.append("company_id", itemGroup.company_id);
+      let data;
+      console.log(isEditopen.edit);
+      if (isEditopen.edit) {
+        data = await updateItemsGroup({ data: formData, id: isEditopen.id });
+      } else {
+        data = await createItemsGroup(formData);
+      }
+      console.log(data);
+      if (!data.success) {
+        Swal.fire({
+          position: "top-end",
+          icon: "error",
+          title: `${data.error.data.data.item_group_name[0]}`,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
+      Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: `${data.message}`,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setItemGroupType({ label: "", value: "" });
+      setItemGroup({ name: "", isactive: 0, company_id: 1 });
+      fetchLatestData();
+    } catch (error) {
+      // handle error here
+    }
   };
 
   return (
@@ -259,7 +405,7 @@ const ItemGroup = () => {
               size="small"
               error={!!error.name}
               helperText={error.name}
-              sx={{ margin: "0 12px", color:"#6c757d" }}
+              sx={{ margin: "0 12px", color: "#6c757d" }}
             />
             <Autocomplete
               options={itemGroupTypes}
@@ -279,8 +425,8 @@ const ItemGroup = () => {
                   label="Item Group Type"
                   variant="outlined"
                   size="small"
-                  error={!!error.type} 
-                  helperText={error.type} 
+                  error={!!error.type}
+                  helperText={error.type}
                 />
               )}
               size="small"
@@ -299,7 +445,10 @@ const ItemGroup = () => {
               control={<Checkbox checked={!!itemGroup.isactive} />}
               label="IsActive"
               onChange={(e) =>
-                setItemGroup({ ...itemGroup, isactive: e.target.checked })
+                setItemGroup({
+                  ...itemGroup,
+                  isactive: e.target.checked ? 1 : 0,
+                })
               }
               sx={{
                 fontSize: ".5rem",
@@ -334,10 +483,10 @@ const ItemGroup = () => {
           alignItems="center"
           mb={2}
           sx={{
-            '@media (max-width: 800px)': {
-              flexDirection: 'column',
-              alignItems: 'center',
-              rowGap:'10px'
+            "@media (max-width: 800px)": {
+              flexDirection: "column",
+              alignItems: "center",
+              rowGap: "10px",
             },
           }}
         >
@@ -528,31 +677,41 @@ const ItemGroup = () => {
                   filteredData
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
-                      <TableRow key={row.Id}>
+                      <TableRow key={row.id}>
                         {visibleColumnsArray.map((column) => (
                           <TableCell
                             key={column}
                             sx={{ color: "#6c757d", fontSize: ".8rem" }}
                           >
-                            {row[column]}
+                            {/* {row[column]} */}
+                            {column === "Id" && row.id}
+                            {column === "Item Group Name" &&
+                              row.item_group_name}
+                            {column === "Group Type" &&
+                              row.pick_list_values.pick_list_value}
+                            {column === "InActive?" &&
+                              (row.in_active === 0 ? "No" : "Yes")}
+                            {column === "Created By" &&
+                              row.created_by_user.name}
+                            {column === "Created On" && row.created_at}
                             {column === "Edit" && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(row.Id)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            )}
                             {column === "Delete" && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleDelete(row.Id)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -584,7 +743,9 @@ const ItemGroup = () => {
           </Box>
         </Box>
       </Box>
-      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
+      {displayPopup.show && (
+        <CustomPopup type={displayPopup.type} message={displayPopup.mgs} />
+      )}
     </Container>
   );
 };

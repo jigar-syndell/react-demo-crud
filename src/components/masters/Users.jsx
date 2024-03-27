@@ -9,10 +9,10 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import Swal from 'sweetalert2'
-import { IconButton, InputAdornment } from '@mui/material';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import Swal from "sweetalert2";
+import { IconButton, InputAdornment } from "@mui/material";
 import {
   Box,
   Typography,
@@ -38,10 +38,10 @@ const generateMockData = () => {
   for (let i = 1; i <= 100; i++) {
     mockData.push({
       Id: i,
-      "Name": `User ${i}`,
-      "Email": `User@${i}gmail.com`,
-      "Role": i % 2 === 0 ? "Admin" : "User",
-      "InActive": i % 2 === 0 ? "Yes" : "No",
+      Name: `User ${i}`,
+      Email: `User@${i}gmail.com`,
+      Role: i % 2 === 0 ? "Admin" : "User",
+      InActive: i % 2 === 0 ? "Yes" : "No",
     });
   }
   return mockData;
@@ -53,15 +53,18 @@ const Users = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [pickListTypes, setPickListTypes] = useState({ name: "", isactive: false });
+  const [pickListTypes, setPickListTypes] = useState({
+    name: "",
+    isactive: false,
+  });
   const [error, setError] = useState({ name: "", type: "" });
   const [anchorEl, setAnchorEl] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState({
     Id: true,
-    "Name": true,
-    "Email": true,
-    "Role": true,
-    "InActive": true,
+    Name: true,
+    Email: true,
+    Role: true,
+    InActive: true,
     Delete: true,
     Edit: true,
   });
@@ -88,7 +91,7 @@ const Users = () => {
   };
 
   const handleSearchChange = (event) => {
-    let searchValue =event.target.value.trim();
+    let searchValue = event.target.value.trim();
     setSearchTerm(searchValue);
   };
 
@@ -101,16 +104,17 @@ const Users = () => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
           title: "Deleted!",
           text: "Your file has been deleted.",
-          icon: "success"
+          icon: "success",
         });
       }
-    });s
+    });
+    s;
   };
   const handleEdit = (id) => {
     console.log(id);
@@ -123,11 +127,10 @@ const Users = () => {
     }
     setSortConfig({ key, direction });
   };
-  
 
   const sortedData = mockData.sort((a, b) => {
-    if(sortConfig.direction === ""){
-      return
+    if (sortConfig.direction === "") {
+      return;
     }
     if (sortConfig.direction === "asc") {
       return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
@@ -165,7 +168,6 @@ const Users = () => {
 
   return (
     <Container>
-   
       <Box className="bg-white p-6 mb-6 rounded">
         <Box
           display="flex"
@@ -287,23 +289,23 @@ const Users = () => {
                           >
                             {row[column]}
                             {column === "Edit" && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(row.Id)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(row.Id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            )}
                             {column === "Delete" && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleDelete(row.Id)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(row.Id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>

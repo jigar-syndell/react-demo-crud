@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef  } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -9,11 +9,11 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import TablePagination from "@mui/material/TablePagination";
 import { mkConfig, generateCsv, download } from "export-to-csv";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import CustomPopup from "../../utils/customPopup";
-import { IconButton, InputAdornment } from '@mui/material';
-import Swal from 'sweetalert2'
+import { IconButton, InputAdornment } from "@mui/material";
+import Swal from "sweetalert2";
 import {
   Box,
   Typography,
@@ -26,12 +26,16 @@ import {
   FormControlLabel,
   TextField,
 } from "@mui/material";
-import { createPickListType, deletePickListType, getPickListTypes, updatePickListType } from "../../apis/masters/pickListType";
+import {
+  createPickListType,
+  deletePickListType,
+  getPickListTypes,
+  updatePickListType,
+} from "../../apis/masters/pickListType";
 const csvConfig = mkConfig({
   useKeysAsHeaders: true,
   filename: "PickListTypes",
 });
-
 
 const PicklistType = () => {
   const [page, setPage] = useState(0);
@@ -39,11 +43,19 @@ const PicklistType = () => {
   const [pickListTypesData, setPickListTypesData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [pickListTypes, setPickListTypes] = useState({ pick_list_type: "", in_active: 0, company_id: 1 });
+  const [pickListTypes, setPickListTypes] = useState({
+    pick_list_type: "",
+    in_active: 0,
+    company_id: 1,
+  });
   const [error, setError] = useState({ name: "", type: "" });
-  const [displayPopup, setDisplayPopup] = useState({show : false,type : '', mgs : ''});
+  const [displayPopup, setDisplayPopup] = useState({
+    show: false,
+    type: "",
+    mgs: "",
+  });
   const [anchorEl, setAnchorEl] = useState(null);
-  const [isEditopen, setisEditopen] = useState({edit : false, id : "" });
+  const [isEditopen, setisEditopen] = useState({ edit: false, id: "" });
   const [visibleColumns, setVisibleColumns] = useState({
     Id: true,
     "Pick List Type": true,
@@ -59,7 +71,7 @@ const PicklistType = () => {
     if (sortConfig.direction === "") {
       return pickListTypesData;
     }
-  
+
     return [...pickListTypesData].sort((a, b) => {
       if (sortConfig.direction === "asc") {
         return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1;
@@ -70,21 +82,21 @@ const PicklistType = () => {
   }, [pickListTypesData, sortConfig]);
 
   // fetch latestdata
-  const fetchLatestData = ()=>{
+  const fetchLatestData = () => {
     getPickListTypes()
-    .then((response) => {
-      console.log(response)
-      if (response.success) {
-        setPickListTypesData(response.data);
-      } else {
-        console.error("Failed to fetch pick list types:", response.error);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching pick list types:", error);
-    });
-  }
-  
+      .then((response) => {
+        console.log(response);
+        if (response.success) {
+          setPickListTypesData(response.data);
+        } else {
+          console.error("Failed to fetch pick list types:", response.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching pick list types:", error);
+      });
+  };
+
   useEffect(() => {
     fetchLatestData();
   }, []);
@@ -99,14 +111,22 @@ const PicklistType = () => {
   };
 
   const handleCopyVisibleData = () => {
-    const formattedDataArray = pickListTypesData.map((item) => {
-      return `${item.id}, ${item.pick_list_type}, ${item.in_active === 0 ? "No" : "Yes"}, ${item.created_by_user.name}, ${item.created_at}`;
-    }).join("\n");
-  
+    const formattedDataArray = pickListTypesData
+      .map((item) => {
+        return `${item.id}, ${item.pick_list_type}, ${
+          item.in_active === 0 ? "No" : "Yes"
+        }, ${item.created_by_user.name}, ${item.created_at}`;
+      })
+      .join("\n");
+
     navigator.clipboard.writeText(formattedDataArray);
-    setDisplayPopup({show : true, type:"success", mgs:"Data Copied to Clipboard"})
+    setDisplayPopup({
+      show: true,
+      type: "success",
+      mgs: "Data Copied to Clipboard",
+    });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -115,19 +135,19 @@ const PicklistType = () => {
     // // Hide elements outside the table container before printing
     // const body = document.body;
     // const tableContainer = tableContainerRef.current;
-  
+
     // if (tableContainer) {
     //   const nonTableElements = Array.from(body.children).filter(
     //     (element) => element !== tableContainer
     //   );
-  
+
     //   nonTableElements.forEach((element) => {
     //     element.style.display = "none";
     //   });
-  
+
     //   // Print the table section
     //   window.print();
-  
+
     //   // Restore the display of non-table elements after printing
     //   nonTableElements.forEach((element) => {
     //     element.style.display = "";
@@ -136,25 +156,23 @@ const PicklistType = () => {
     //   console.error("Table container not found.");
     // }
   };
-  
-  
 
   const handleExportCSV = () => {
-    console.log(pickListTypesData)
-    const transformedData = pickListTypesData.map(item => ({
-      "Id": item.id,
+    console.log(pickListTypesData);
+    const transformedData = pickListTypesData.map((item) => ({
+      Id: item.id,
       "Pick List Type": item.pick_list_type,
       "InActive?": item.in_active === 0 ? "false" : "true",
       "Created By": item.created_by_user.name,
       "Created On": item.created_at,
-  }));
-  
-  console.log(transformedData);
+    }));
+
+    console.log(transformedData);
     const csv = generateCsv(csvConfig)(transformedData);
     download(csvConfig)(csv);
-    setDisplayPopup({show : true, type:"success", mgs:"CSV file Exported"})
+    setDisplayPopup({ show: true, type: "success", mgs: "CSV file Exported" });
     setTimeout(() => {
-      setDisplayPopup({show : false, type:"", mgs:""})
+      setDisplayPopup({ show: false, type: "", mgs: "" });
     }, 3000);
   };
 
@@ -170,7 +188,7 @@ const PicklistType = () => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
         deletePickListType(id)
@@ -178,18 +196,20 @@ const PicklistType = () => {
             if (response.success) {
               Swal.fire({
                 title: "Deleted!",
-                text: response.message || "Your Pick List Type has been created.",
-                icon: "success"
+                text:
+                  response.message || "Your Pick List Type has been created.",
+                icon: "success",
               });
               // fetch updated data
               fetchLatestData();
-
             } else {
-              console.log(response.error.data.message)
+              console.log(response.error.data.message);
               Swal.fire({
                 title: "Error!",
-                text: response.error.data.message || "Failed to delete the Pick List Type.",
-                icon: "error"
+                text:
+                  response.error.data.message ||
+                  "Failed to delete the Pick List Type.",
+                icon: "error",
               });
             }
           })
@@ -197,7 +217,7 @@ const PicklistType = () => {
             Swal.fire({
               title: "Error!",
               text: "Failed to delete the Pick List Type.",
-              icon: "error"
+              icon: "error",
             });
             console.error("Error deleting Pick List Type:", error);
           });
@@ -205,18 +225,20 @@ const PicklistType = () => {
     });
   };
   const handleEdit = (id) => {
-    setisEditopen({edit: true, id : id })
-    let filteredData = pickListTypesData.filter(item => item.id === id);
-    filteredData = filteredData[0]
-    console.log(filteredData)
-    setPickListTypes  ({pick_list_type : filteredData.pick_list_type , in_active : filteredData.in_active === 1 ? true : false , company_id: filteredData.company_id });
+    setisEditopen({ edit: true, id: id });
+    let filteredData = pickListTypesData.filter((item) => item.id === id);
+    filteredData = filteredData[0];
+    console.log(filteredData);
+    setPickListTypes({
+      pick_list_type: filteredData.pick_list_type,
+      in_active: filteredData.in_active === 1 ? true : false,
+      company_id: filteredData.company_id,
+    });
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
+      behavior: "smooth",
     });
-
   };
-
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -224,7 +246,7 @@ const PicklistType = () => {
       direction = "desc";
     }
     setSortConfig({ key, direction });
-  
+
     // Sort logic based on column key
     if (key === "Id") {
       // Sort numerical values for Id column
@@ -252,8 +274,14 @@ const PicklistType = () => {
       // Sort alphabetically for other columns
       setPickListTypesData((prevData) => {
         return [...prevData].sort((a, b) => {
-          const valueA = key === "Pick List Type" ? a.pick_list_type : a.created_by_user.name;
-          const valueB = key === "Pick List Type" ? b.pick_list_type : b.created_by_user.name;
+          const valueA =
+            key === "Pick List Type"
+              ? a.pick_list_type
+              : a.created_by_user.name;
+          const valueB =
+            key === "Pick List Type"
+              ? b.pick_list_type
+              : b.created_by_user.name;
           if (direction === "asc") {
             return valueA.localeCompare(valueB);
           } else {
@@ -263,7 +291,6 @@ const PicklistType = () => {
       });
     }
   };
-  
 
   const handleToggleColumn = (column) => {
     setVisibleColumns({
@@ -301,9 +328,9 @@ const PicklistType = () => {
     (column) => visibleColumns[column]
   );
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-   
+
     const removeError = () => {
       setTimeout(() => {
         setError({ name: "", type: "" });
@@ -320,35 +347,35 @@ const PicklistType = () => {
     // make an api call to save data to database
     try {
       const formData = new FormData();
-      formData.append("pick_list_type", pickListTypes.pick_list_type)
-      formData.append("in_active", pickListTypes.in_active)
-      formData.append("company_id", pickListTypes.company_id)
-      let data
-      console.log(isEditopen.edit)
-      if(isEditopen.edit){
-        data = await updatePickListType({data : formData, id : isEditopen.id })
-      }else{
-        data = await createPickListType(formData)
+      formData.append("pick_list_type", pickListTypes.pick_list_type);
+      formData.append("in_active", pickListTypes.in_active);
+      formData.append("company_id", pickListTypes.company_id);
+      let data;
+      console.log(isEditopen.edit);
+      if (isEditopen.edit) {
+        data = await updatePickListType({ data: formData, id: isEditopen.id });
+      } else {
+        data = await createPickListType(formData);
       }
-      if(!data.success){
-         Swal.fire({
+      if (!data.success) {
+        Swal.fire({
           position: "top-end",
           icon: "error",
           title: `${data.error.data.data.pick_list_type[0]}`,
           showConfirmButton: false,
-          timer: 1500
-    });
-    return
+          timer: 1500,
+        });
+        return;
       }
       Swal.fire({
         position: "top-end",
         icon: "success",
         title: `${data.message}`,
         showConfirmButton: false,
-        timer: 1500
-  });
-  setPickListTypes({ pick_list_type: "", in_active: 0, company_id: 1 })
-  fetchLatestData();
+        timer: 1500,
+      });
+      setPickListTypes({ pick_list_type: "", in_active: 0, company_id: 1 });
+      fetchLatestData();
     } catch (error) {
       // handle error here
     }
@@ -374,12 +401,15 @@ const PicklistType = () => {
               fullWidth
               value={pickListTypes.pick_list_type}
               onChange={(e) => {
-                setPickListTypes({ ...pickListTypes, pick_list_type: e.target.value });
+                setPickListTypes({
+                  ...pickListTypes,
+                  pick_list_type: e.target.value,
+                });
               }}
               size="small"
               error={!!error.name}
               helperText={error.name}
-              sx={{ margin: "0 12px", color:"#6c757d" }}
+              sx={{ margin: "0 12px", color: "#6c757d" }}
             />
           </Box>
           <Box
@@ -391,19 +421,19 @@ const PicklistType = () => {
             }}
           >
             <FormControlLabel
-  control={<Checkbox checked={!!pickListTypes.in_active} />}
-  label="in_active"
-  onChange={(e) =>
-    setPickListTypes({
-      ...pickListTypes,
-      in_active: e.target.checked ? 1 : 0 
-    })
-  }
-  sx={{
-    fontSize: ".5rem",
-    margin: "0",
-  }}
-/>
+              control={<Checkbox checked={!!pickListTypes.in_active} />}
+              label="in_active"
+              onChange={(e) =>
+                setPickListTypes({
+                  ...pickListTypes,
+                  in_active: e.target.checked ? 1 : 0,
+                })
+              }
+              sx={{
+                fontSize: ".5rem",
+                margin: "0",
+              }}
+            />
             <Button
               variant="contained"
               type="submit"
@@ -432,10 +462,10 @@ const PicklistType = () => {
           alignItems="center"
           mb={2}
           sx={{
-            '@media (max-width: 800px)': {
-              flexDirection: 'column',
-              alignItems: 'center',
-              rowGap:'10px'
+            "@media (max-width: 800px)": {
+              flexDirection: "column",
+              alignItems: "center",
+              rowGap: "10px",
             },
           }}
         >
@@ -584,7 +614,7 @@ const PicklistType = () => {
             }}
           />
         </Box>
-        <Box  ref={tableContainerRef}>
+        <Box ref={tableContainerRef}>
           <TableContainer
             component={Paper}
             sx={{ border: "1px solid #dee2e6" }}
@@ -626,46 +656,38 @@ const PicklistType = () => {
                   filteredData
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
-                      <TableRow key={row.Id}>
+                      <TableRow key={row.id}>
                         {visibleColumnsArray.map((column) => (
                           <TableCell
                             key={column}
                             sx={{ color: "#6c757d", fontSize: ".8rem" }}
                           >
                             {/* {row[column]} */}
-                            {column === "Id" && (
-                              row.id
-                              )}
-                            {column === "Pick List Type" && (
-                              row.pick_list_type
-                              )}
-                            {column === "InActive?" && (
-                              row.in_active === 0 ? 'No' : 'Yes'
-                              )}
-                            {column === "Created By" && (
-                              row.created_by_user.name
-                              )}
-                            {column === "Created On" && (
-                              row.created_at
-                              )}
+                            {column === "Id" && row.id}
+                            {column === "Pick List Type" && row.pick_list_type}
+                            {column === "InActive?" &&
+                              (row.in_active === 0 ? "No" : "Yes")}
+                            {column === "Created By" &&
+                              row.created_by_user.name}
+                            {column === "Created On" && row.created_at}
                             {column === "Edit" && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(row.id)}
-                                  sx={{ ml: 1 }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            )}
                             {column === "Delete" && (
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleDelete(row.id)}
-                                    sx={{ ml: 1 }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDelete(row.id)}
+                                sx={{ ml: 1 }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -697,7 +719,9 @@ const PicklistType = () => {
           </Box>
         </Box>
       </Box>
-      {displayPopup.show && <CustomPopup type={displayPopup.type}  message={displayPopup.mgs} />}
+      {displayPopup.show && (
+        <CustomPopup type={displayPopup.type} message={displayPopup.mgs} />
+      )}
     </Container>
   );
 };

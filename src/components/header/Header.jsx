@@ -13,7 +13,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import PersonIcon from "@mui/icons-material/Person";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleSidebar, MobileToggleSidebar } from "../../actions/generalActions";
+import { toggleSidebar, MobileToggleSidebar, logoutUser } from "../../actions/generalActions";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Link } from "react-router-dom";
 
@@ -29,7 +29,8 @@ function Header() {
   };
   const [broken, setBroken] = useState(window.matchMedia('(max-width: 800px)').matches);
   const { collapsed, toggle } = useSelector((state) => state.sidebar);
-    const [remountKey, setRemountKey] = useState(0);
+  const { user } = useSelector((state) => state.User);
+
 
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
@@ -76,6 +77,9 @@ function Header() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+  const handleLogout = () => {
+    dispatch(logoutUser())
+  };
 
   return (
     <header
@@ -126,7 +130,7 @@ function Header() {
             onClick={handleToggle}
             sx={{textTransform : "none", color :"#6c757d"}}
           >
-            Admin
+            {user && user.name || "Admin"}
           </Button>
           <Popper
             open={open}
@@ -178,7 +182,7 @@ function Header() {
                       <MenuItem
                        component={Link}
                        to="/"
-                      onClick={handleClose}>
+                       onClick={handleLogout}>
                         <ListItemIcon>
                           <LogoutIcon />
                         </ListItemIcon>
