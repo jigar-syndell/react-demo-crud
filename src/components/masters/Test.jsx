@@ -1,94 +1,140 @@
-import React, { useEffect, useRef } from "react";
-import $ from "jquery";
-import "datatables.net";
-import "datatables.net-bs4";
-import "datatables.net-bs4/css/dataTables.bootstrap4.min.css";
-import "datatables.net-buttons-bs4";
-import "datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css";
-import "datatables.net-buttons/js/buttons.colVis";
-import "datatables.net-buttons/js/buttons.html5";
-import "datatables.net-buttons/js/buttons.print";
-import "datatables.net-responsive-bs4";
-import "datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css";
-import CustomPopup from "../../utils/customPopup";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import MUIDataTable from "mui-datatables";
+import Swal from "sweetalert2";
+import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import { deleteItems, getItems } from "../../apis/masters/items";
 
-const Test = () => {
-    const tableRef = useRef(null);
-    const generateMockData = () => {
-      const mockData = [];
-      for (let i = 1; i <= 100; i++) {
-        mockData.push({
-          Id: i,
-          Name: `Item ${i}`,
-          Image: `https://picsum.photos/seed/picsum/200/300`,
-          group: `Group ${(i % 5) + 1}`,
-          UoM: i % 2 === 0 ? "pcs" : "kg",
-          MRP: Math.floor(Math.random() * 500) + 50,
-          inActive: i % 3 === 0 ? "True" : "False",
-          createdBy: `User ${(i % 3) + 1}`,
-          createdOn: "2022-01-01", // Assuming all items are created on the same date
-        });
-      }
-      return mockData;
-    };
-    
-    const mockData = generateMockData();
-  
-    useEffect(() => {
-      const table = $(tableRef.current).DataTable({
-        data: mockData,
-        columns: [
-          { title: "Id", data: "Id" },
-          { title: "Name", data: "Name" },
-          { title: "Image", data: "Image" },
-          { title: "Group", data: "group" },
-          { title: "UoM", data: "UoM" },
-          { title: "MRP", data: "MRP" },
-          { title: "InActive", data: "inActive" },
-          { title: "CreatedBy", data: "createdBy" },
-          { title: "CreatedOn", data: "createdOn" },
-        ],
-        dom: 'lBfrtip',
-        buttons: [
-          'copy', 'csv', 'print',
-        ],
-        responsive: true,
+const Items = () => {
+  const [itemsData, setItemsData] = useState([]);
+  const navigate = useNavigate();
+
+  // Fetch latest data
+  const fetchLatestData = () => {
+    getItems()
+      .then((response) => {
+        if (response.success) {
+          setItemsData(response.data);
+        } else {
+          console.error("Failed to fetch items:", response.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching items:", error);
       });
-  
-      return () => {
-        table.destroy();
-      };
-    }, []);
-  
-    const handleDelete = (id) => {
-      console.log("Delete item with id:", id);
-    };
-  
-    const handleEdit = (id) => {
-      console.log("Edit item with id:", id);
-    };
-  
-    return (
-      <div>
-        <table ref={tableRef} className="table table-bordered" style={{ width: "100%" }}>
-          <thead>
-            <tr>
-              <th>Id</th>
-              <th>Name</th>
-              <th>Image</th>
-              <th>Group</th>
-              <th>UoM</th>
-              <th>MRP</th>
-              <th>InActive</th>
-              <th>CreatedBy</th>
-              <th>CreatedOn</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <CustomPopup />
-      </div>
-    );
   };
+
+  useEffect(() => {
+    fetchLatestData();
+  }, []);
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteItems(id)
+          .then((response) => {
+            if (response.success) {
+              Swal.fire({
+                title: "Deleted!",
+                text: response.message || "Your item has been deleted.",
+                icon: "success",
+              });
+              // Fetch updated data
+              fetchLatestData();
+            } else {
+              Swal.fire({
+                title: "Error!",
+                text: response.error.data.message || "Failed to delete the item.",
+                icon: "error",
+              });
+            }
+          })
+          .catch((error) => {
+            Swal.fire({
+              title: "Error!",
+              text: "Failed to delete the item.",
+              icon: "error",
+            });
+            console.error("Error deleting item:", error);
+          });
+      }
+    });
+  };
+
+  const columns = [
+    { name: "id", label: "ID" },
+    { name: "item_title", label: "Name" },
+    { 
+      name: "item_image_path", 
+      label: "Image",
+      options: {
+        customBodyRender: (value) => <img src={value} alt="Item Image" style={{ width: '50px', height: '50px' }} />,
+      },
+    },
+    { name: "item_groups.item_group_name", label: "Group" },
+    { name: "pick_list_values.pick_list_value", label: "UoM" },
+    { name: "mrp", label: "MRP" },
+    { name: "in_active", label: "InActive" },
+    { name: "created_by_user.name", label: "CreatedBy" },
+    { name: "created_at", label: "CreatedOn" },
+    {
+      name: "Edit",
+      options: {
+        customBodyRender: (value, tableMeta, updateValue) => (
+          <IconButton size="small" onClick={() => handleEdit(value)}>
+            <EditIcon />
+          </IconButton>
+        ),
+      },
+    },
+    {
+      name: "Delete",
+      options: {
+        customBodyRender: (value) => (
+          <IconButton size="small" onClick={() => handleDelete(value)}>
+            <DeleteIcon />
+          </IconButton>
+        ),
+      },
+    },
+  ];
   
-  export default Test;
+
+  const options = {
+    search: true,
+    print: true,
+    download: true,
+    pagination: true,
+    viewColumns: true,
+    customToolbar: () => (
+      <Button variant="contained" onClick={() => navigate("/item/create")}>
+        Add New
+      </Button>
+    ),
+    onRowsDelete: (rowsDeleted) => {
+      // Handle row deletion if needed
+    },
+  };
+
+  return (
+    <MUIDataTable
+      title={"Items"}
+      data={itemsData}
+      columns={columns}
+      options={options}
+    />
+  );
+};
+
+export default Items;

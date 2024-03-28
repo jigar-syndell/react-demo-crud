@@ -131,31 +131,41 @@ const PicklistType = () => {
   };
 
   const handlePrint = () => {
-    window.print();
-    // // Hide elements outside the table container before printing
-    // const body = document.body;
-    // const tableContainer = tableContainerRef.current;
+    // Clone the table container
+    const printContents = tableContainerRef.current.cloneNode(true);
+    // Get the table element from the cloned contents
+    const table = printContents.querySelector('table');
+  
+    // Apply basic styling to the table for printing
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.border = '1px solid #000';
+  
+    // Loop through all table cells and apply padding and border
+    const cells = table.querySelectorAll('th, td');
+    cells.forEach(cell => {
+      cell.style.border = '1px solid #000';
+      cell.style.padding = '8px';
+    });
+  
+    // Apply background color and font weight to table headers
+    const headers = table.querySelectorAll('th');
+    headers.forEach(header => {
+      header.style.backgroundColor = '#f2f2f2';
+      header.style.fontWeight = 'bold';
+    });
+  
+    // Open a new window and append the modified contents
+    const printWindow = window.open('', '_blank');
+    printWindow.document.body.appendChild(printContents);
+    // Print the window
+    printWindow.print();
+    printWindow.close()
+};
 
-    // if (tableContainer) {
-    //   const nonTableElements = Array.from(body.children).filter(
-    //     (element) => element !== tableContainer
-    //   );
 
-    //   nonTableElements.forEach((element) => {
-    //     element.style.display = "none";
-    //   });
+  
 
-    //   // Print the table section
-    //   window.print();
-
-    //   // Restore the display of non-table elements after printing
-    //   nonTableElements.forEach((element) => {
-    //     element.style.display = "";
-    //   });
-    // } else {
-    //   console.error("Table container not found.");
-    // }
-  };
 
   const handleExportCSV = () => {
     console.log(pickListTypesData);
@@ -231,7 +241,7 @@ const PicklistType = () => {
     console.log(filteredData);
     setPickListTypes({
       pick_list_type: filteredData.pick_list_type,
-      in_active: filteredData.in_active === 1 ? true : false,
+      in_active: filteredData.in_active,
       company_id: filteredData.company_id,
     });
     window.scrollTo({
@@ -346,6 +356,7 @@ const PicklistType = () => {
     }
     // make an api call to save data to database
     try {
+      console.log(pickListTypes)
       const formData = new FormData();
       formData.append("pick_list_type", pickListTypes.pick_list_type);
       formData.append("in_active", pickListTypes.in_active);
@@ -375,6 +386,7 @@ const PicklistType = () => {
         timer: 1500,
       });
       setPickListTypes({ pick_list_type: "", in_active: 0, company_id: 1 });
+      setisEditopen({ edit: false, id: "" });
       fetchLatestData();
     } catch (error) {
       // handle error here
@@ -614,7 +626,7 @@ const PicklistType = () => {
             }}
           />
         </Box>
-        <Box ref={tableContainerRef}>
+        <Box ref={tableContainerRef} >
           <TableContainer
             component={Paper}
             sx={{ border: "1px solid #dee2e6" }}

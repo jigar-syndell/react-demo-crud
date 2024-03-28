@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -73,6 +73,7 @@ const Picklistvalue = () => {
     Delete: true,
     Edit: true,
   });
+  const tableContainerRef = useRef(null);
 
   // fetch latestdata
   const fetchLatestData = () => {
@@ -126,9 +127,37 @@ const Picklistvalue = () => {
   };
 
   const handlePrint = () => {
-    // Logic to print table data
-    window.print();
-  };
+    // Clone the table container
+    const printContents = tableContainerRef.current.cloneNode(true);
+    // Get the table element from the cloned contents
+    const table = printContents.querySelector('table');
+  
+    // Apply basic styling to the table for printing
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.border = '1px solid #000';
+  
+    // Loop through all table cells and apply padding and border
+    const cells = table.querySelectorAll('th, td');
+    cells.forEach(cell => {
+      cell.style.border = '1px solid #000';
+      cell.style.padding = '8px';
+    });
+  
+    // Apply background color and font weight to table headers
+    const headers = table.querySelectorAll('th');
+    headers.forEach(header => {
+      header.style.backgroundColor = '#f2f2f2';
+      header.style.fontWeight = 'bold';
+    });
+  
+    // Open a new window and append the modified contents
+    const printWindow = window.open('', '_blank');
+    printWindow.document.body.appendChild(printContents);
+    // Print the window
+    printWindow.print();
+    printWindow.close()
+};
 
   const handleExportCSV = () => {
     console.log(pickListValueData);
@@ -369,6 +398,7 @@ const Picklistvalue = () => {
       });
       setPickListValueType({ label: "", value: "" });
       setPickListValue({ name: "", isactive: 0, company_id: 1 });
+      setisEditopen({ edit: false, id: "" });
       fetchLatestData();
     } catch (error) {
       // handle error here
@@ -631,7 +661,7 @@ const Picklistvalue = () => {
             }}
           />
         </Box>
-        <Box>
+        <Box ref={tableContainerRef} >
           <TableContainer
             component={Paper}
             sx={{ border: "1px solid #dee2e6" }}
